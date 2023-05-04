@@ -78,7 +78,7 @@ class CustomDataset(Dataset):
         self.filter_empty_gt = filter_empty_gt
         self.file_client = mmcv.FileClient(**file_client_args)
         self.CLASSES = self.get_classes(classes)
-
+        # input('in CustomDataset')
         # join paths if data_root is specified
         if self.data_root is not None:
             if not osp.isabs(self.ann_file):
@@ -254,6 +254,9 @@ class CustomDataset(Dataset):
         """
 
         img_info = self.data_infos[idx]
+        # ## 为了可视化gt
+        # ann_info = self.get_ann_info(idx)
+        # results = dict(img_info=img_info, ann_info=ann_info)
         results = dict(img_info=img_info)
         if self.proposals is not None:
             results['proposals'] = self.proposals[idx]

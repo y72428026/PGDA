@@ -15,7 +15,6 @@ class SingleStageDetector(BaseDetector):
     Single-stage detectors directly and densely predict bounding boxes on the
     output features of the backbone+neck.
     """
-
     def __init__(self,
                  backbone,
                  neck=None,
@@ -84,7 +83,8 @@ class SingleStageDetector(BaseDetector):
                                               gt_labels, gt_bboxes_ignore)
         return losses
 
-    def simple_test(self, img, img_metas, rescale=False):
+    # def simple_test(self, img, img_metas, rescale=False):
+    def simple_test(self, img, img_metas, rescale=True):
         """Test function without test-time augmentation.
 
         Args:

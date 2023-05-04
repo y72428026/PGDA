@@ -275,8 +275,8 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
                     bbox_color=(72, 101, 241),
                     text_color=(72, 101, 241),
                     mask_color=None,
-                    thickness=2,
-                    font_size=13,
+                    thickness=4,
+                    font_size=10,
                     win_name='',
                     show=False,
                     wait_time=0,
@@ -358,3 +358,49 @@ class BaseDetector(BaseModule, metaclass=ABCMeta):
     def onnx_export(self, img, img_metas):
         raise NotImplementedError(f'{self.__class__.__name__} does '
                                   f'not support ONNX EXPORT')
+
+    def show_gt_result(self,
+                    img,
+                    gt_bboxes,
+                    gt_labels,
+                    gt_masks=None,
+                    score_thr=0.3,
+                    bbox_color=(72, 101, 241),
+                    text_color=(72, 101, 241),
+                    mask_color=None,
+                    thickness=4,
+                    font_size=10,
+                    win_name='',
+                    show=False,
+                    wait_time=0,
+                    out_file=None):
+
+        img = mmcv.imread(img)
+        img = img.copy()
+        
+        # draw segmentation masks
+        # if out_file specified, do not show image in window
+        if out_file is not None:
+            show = False
+        gt_bboxes = np.array(gt_bboxes[0][0])
+        gt_labels = np.array(gt_labels[0][0])
+        # draw bounding boxes
+        img = imshow_det_bboxes(
+            img,
+            gt_bboxes,
+            gt_labels,
+            gt_masks,
+            class_names=self.CLASSES,
+            score_thr=0,
+            bbox_color=bbox_color,
+            text_color=text_color,
+            mask_color=mask_color,
+            thickness=thickness,
+            font_size=font_size,
+            win_name=win_name,
+            show=show,
+            wait_time=wait_time,
+            out_file=out_file)
+
+        if not (show or out_file):
+            return img

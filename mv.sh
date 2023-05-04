@@ -1,0 +1,2 @@
+mv /home/yebh/mmdetection/work_dirs/test_dataset/L2T_SCL/CFA_608/ok /home/yebh/work_dirs_remote/test_dataset/L2T_SCL_608
+# mv /home/yebh/mmdetection/work_dirs/test_dataset/T2L_SCL/CFA_608/ok /home/yebh/work_dirs_remote/test_dataset/T2L_SCL_608/CFA

@@ -265,7 +265,10 @@ def imshow_det_bboxes(img,
         'segms and bboxes should not be None at the same time.'
 
     img = mmcv.imread(img).astype(np.uint8)
-
+    # input(class_names)
+    # class_names = ('triangular offset', 'lower remnant', 'left and right side remnants', 
+                #    'both side openings', 'large hole opening', 'white edge')
+    class_names = None
     if score_thr > 0:
         assert bboxes is not None and bboxes.shape[1] == 5
         scores = bboxes[:, -1]
@@ -294,12 +297,15 @@ def imshow_det_bboxes(img,
 
     max_label = int(max(labels) if len(labels) > 0 else 0)
     text_palette = palette_val(get_palette(text_color, max_label + 1))
+    text_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
     text_colors = [text_palette[label] for label in labels]
 
     num_bboxes = 0
     if bboxes is not None:
         num_bboxes = bboxes.shape[0]
         bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
+#         bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(51, 255, 87),(51, 255, 189)])
+        bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
         colors = [bbox_palette[label] for label in labels[:num_bboxes]]
         draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 

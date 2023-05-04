@@ -2035,7 +2035,7 @@ class Mosaic:
         Returns:
             dict: Result dict with mosaic transformed.
         """
-
+        input('using mosaic')
         if random.uniform(0, 1) > self.prob:
             return results
 

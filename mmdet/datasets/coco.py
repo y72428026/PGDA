@@ -7,7 +7,7 @@ import os.path as osp
 import tempfile
 import warnings
 from collections import OrderedDict
-
+import copy, sys
 import mmcv
 import numpy as np
 from mmcv.utils import print_log
@@ -528,6 +528,7 @@ class CocoDataset(CustomDataset):
                         f'{cocoEval.stats[coco_metric_names[item]]:.3f}')
                     eval_results[item] = val
             else:
+                cocoEval_50 = copy.deepcopy(cocoEval)
                 cocoEval.evaluate()
                 cocoEval.accumulate()
 
@@ -538,38 +539,135 @@ class CocoDataset(CustomDataset):
                 print_log('\n' + redirect_string.getvalue(), logger=logger)
 
                 if classwise:  # Compute per-category AP
-                    # Compute per-category AP
-                    # from https://github.com/facebookresearch/detectron2/
-                    precisions = cocoEval.eval['precision']
-                    # precision: (iou, recall, cls, area range, max dets)
-                    assert len(self.cat_ids) == precisions.shape[2]
 
-                    results_per_category = []
-                    for idx, catId in enumerate(self.cat_ids):
-                        # area range index 0: all area ranges
-                        # max dets index -1: typically 100 per image
-                        nm = self.coco.loadCats(catId)[0]
-                        precision = precisions[:, :, idx, 0, -1]
-                        precision = precision[precision > -1]
-                        if precision.size:
-                            ap = np.mean(precision)
+                    def _summarize_ap(cocoEval):
+                        # Compute per-category AP
+                        # from https://github.com/facebookresearch/detectron2/
+                        precisions = cocoEval.eval['precision']
+                        # precision: (iou, recall, cls, area range, max dets)
+                        assert len(self.cat_ids) == precisions.shape[2]
+
+                        results_per_category = []
+                        AP_classwise = []
+                        for idx, catId in enumerate(self.cat_ids):
+                            # area range index 0: all area ranges
+                            # max dets index -1: typically 100 per image
+                            nm = self.coco.loadCats(catId)[0]
+                            precision = precisions[:, :, idx, 0, -1]
+                            precision = precision[precision > -1]
+                            if precision.size:
+                                ap = np.mean(precision)
+                            else:
+                                ap = float('nan')
+                            results_per_category.append(
+                                (f'{nm["name"]}', f'{float(ap):0.3f}'))
+                            AP_classwise.append(float(ap))
+                        num_columns = min(6, len(results_per_category) * 2)
+                        results_flatten = list(
+                            itertools.chain(*results_per_category))
+                        headers = ['category', 'AP'] * (num_columns // 2)
+                        results_2d = itertools.zip_longest(*[
+                            results_flatten[i::num_columns]
+                            for i in range(num_columns)
+                        ])
+                        table_data = [headers]
+                        table_data += [result for result in results_2d]
+                        table = AsciiTable(table_data)
+                        print_log('\n' + table.table, logger=logger)
+                        print(AP_classwise)
+                        print(np.mean(np.array(AP_classwise)))
+                        return(AP_classwise)
+
+                    def _summarize_ar(cocoEval, ap=0, iouThr=None, areaRng='all', maxDets=100):
+                        p = cocoEval.params
+                        # iStr = ' {:<18} {} @[ IoU={:<9} | area={:>6s} | maxDets={:>3d} ] = {:0.3f}'
+                        # titleStr = 'Average Precision' if ap == 1 else 'Average Recall'
+                        # typeStr = '(AP)' if ap==1 else '(AR)'
+                        # iouStr = '{:0.2f}:{:0.2f}'.format(p.iouThrs[0], p.iouThrs[-1]) \
+                        #     if iouThr is None else '{:0.2f}'.format(iouThr)
+
+                        aind = [i for i, aRng in enumerate(p.areaRngLbl) if aRng == areaRng]
+                        mind = [i for i, mDet in enumerate(p.maxDets) if mDet == maxDets]
+                        if ap == 1:
+                            # dimension of precision: [TxRxKxAxM]
+                            s = self.eval['precision']
+                            # IoU
+                            if iouThr is not None:
+                                t = np.where(iouThr == p.iouThrs)[0]
+                                s = s[t]
+                            s = s[:,:,:,aind,mind]
                         else:
-                            ap = float('nan')
-                        results_per_category.append(
-                            (f'{nm["name"]}', f'{float(ap):0.3f}'))
+                            # dimension of recall: [TxKxAxM]
+                            s = cocoEval.eval['recall']
+                            # input(f"s.shape: {s.shape}")
+                            if iouThr is not None:
+                                t = np.where(iouThr == p.iouThrs)[0]
+                                s = s[t]
+                            s = s[:,:,aind,mind]
+                        # if len(s[s>-1])==0:
+                        #     mean_s = -1
+                        # else:
+                        mean_s = np.ones([s.shape[1]]) * -1 
+                        for ii in range(s.shape[1]): # K
+                            s_cate = s[:,ii]
+                            if len(s_cate[s_cate>-1])==0:
+                                mean_s[ii] = -1
+                            else:
+                                mean_s[ii] = np.mean(s_cate[s_cate>-1])
+                            # mean_s = np.mean(s[s>-1])
+                        # print(iStr.format(titleStr, typeStr, iouStr, areaRng, maxDets, mean_s))
+                        # return mean_s
 
-                    num_columns = min(6, len(results_per_category) * 2)
-                    results_flatten = list(
-                        itertools.chain(*results_per_category))
-                    headers = ['category', 'AP'] * (num_columns // 2)
-                    results_2d = itertools.zip_longest(*[
-                        results_flatten[i::num_columns]
-                        for i in range(num_columns)
-                    ])
-                    table_data = [headers]
-                    table_data += [result for result in results_2d]
-                    table = AsciiTable(table_data)
-                    print_log('\n' + table.table, logger=logger)
+                        results_per_category = []
+                        AR_classwise = []
+                        for idx, catId in enumerate(self.cat_ids):
+                            # area range index 0: all area ranges
+                            # max dets index -1: typically 100 per image
+                            nm = self.coco.loadCats(catId)[0]
+                            # precision = precisions[:, :, idx, 0, -1]
+                            # precision = precision[precision > -1]
+                            # if precision.size:
+                            #     ap = np.mean(precision)
+                            # else:
+                            #     ap = float('nan')
+                            results_per_category.append(
+                                (f'{nm["name"]}', f'{float(mean_s[idx]):0.3f}'))
+                            AR_classwise.append(float(mean_s[idx]))
+                        num_columns = min(6, len(results_per_category) * 2)
+                        results_flatten = list(
+                            itertools.chain(*results_per_category))
+                        headers = ['category', 'AR'] * (num_columns // 2)
+                        results_2d = itertools.zip_longest(*[
+                            results_flatten[i::num_columns]
+                            for i in range(num_columns)
+                        ])
+                        table_data = [headers]
+                        table_data += [result for result in results_2d]
+                        table = AsciiTable(table_data)
+                        print_log('\n' + table.table, logger=logger)
+                        print(AR_classwise)
+                        print(np.mean(np.array(AR_classwise)))
+                        return(AR_classwise)
+
+                    nowstdout = sys.stdout
+                    sys.stdout = sys.__stdout__
+                    cocoEval_50.params.iouThrs = [0.5]
+                    cocoEval_50.evaluate()
+                    cocoEval_50.accumulate()
+                    cocoEval_50.summarize()
+                    sys.stdout = nowstdout
+                    print("\nAP50",end='')
+                    ap50_classwise = _summarize_ap(cocoEval_50)
+                    print("\nAR50",end='')
+                    ar50_classwise = _summarize_ar(cocoEval_50)
+                    f_score = np.zeros([len(ap50_classwise)])
+                    for i in range(len(ap50_classwise)):
+                        f_score[i] = 2 * ap50_classwise[i] * ar50_classwise[i] /(ap50_classwise[i] + ar50_classwise[i])
+                    print('\nF_score50')
+                    print(f_score)
+                    print(np.mean(f_score))
+                    print("\nAR50:95",end='')
+                    ar_classwise = _summarize_ar(cocoEval)
 
                 if metric_items is None:
                     metric_items = [

@@ -13,6 +13,7 @@ SHARED_HEADS = MODELS
 HEADS = MODELS
 LOSSES = MODELS
 DETECTORS = MODELS
+UDA = MODELS
 
 
 def build_backbone(cfg):
@@ -44,7 +45,7 @@ def build_loss(cfg):
     """Build loss."""
     return LOSSES.build(cfg)
 
-
+import copy
 def build_detector(cfg, train_cfg=None, test_cfg=None):
     """Build detector."""
     if train_cfg is not None or test_cfg is not None:
@@ -55,5 +56,38 @@ def build_detector(cfg, train_cfg=None, test_cfg=None):
         'train_cfg specified in both outer field and model field '
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
+    
     return DETECTORS.build(
         cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
+
+def build_detector_mine(cfg, train_cfg=None, test_cfg=None):
+    """Build detector."""
+    if train_cfg is not None or test_cfg is not None:
+        warnings.warn(
+            'train_cfg and test_cfg is deprecated, '
+            'please specify them in model', UserWarning)
+    assert cfg.get('train_cfg') is None or train_cfg is None, \
+        'train_cfg specified in both outer field and model field '
+    assert cfg.get('test_cfg') is None or test_cfg is None, \
+        'test_cfg specified in both outer field and model field '
+    
+    # input(cfg.keys())
+    if 'uda' in cfg:
+        # from mmdet.models.detectors.UDAModel import UDAModel
+        from mmdet.models.da_heads.UDAModel_after_SCL import UDAModel_SCL
+        from mmdet.models.da_heads.UDAModel import UDAModel
+        model = copy.deepcopy(cfg.model)
+        model_net = build_detector_mine(model, train_cfg=train_cfg, test_cfg=test_cfg)
+        cfg.uda['model'] = model
+        cfg.uda['max_epochs'] = cfg.runner.max_epochs 
+        cfg.uda['work_dir'] = cfg.work_dir
+        if cfg.uda.type == "UDAModel":
+            return UDAModel(model_net, **cfg.uda)
+        elif cfg.uda.type == "UDAModel_SCL":
+            return UDAModel_SCL(model_net, **cfg.uda)
+    elif 'model' in cfg:
+        return DETECTORS.build(
+            cfg.model, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
+    else:
+        return DETECTORS.build(
+            cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))

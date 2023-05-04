@@ -77,6 +77,7 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
                      use_sigmoid=True,
                      loss_weight=1.0),
                  loss_wh=dict(type='MSELoss', loss_weight=1.0),
+                 focal=False,
                  train_cfg=None,
                  test_cfg=None,
                  init_cfg=dict(
@@ -92,6 +93,8 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
         self.featmap_strides = featmap_strides
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
+        self.focal = focal
+        # input(self.focal)
         if self.train_cfg:
             self.assigner = build_assigner(self.train_cfg.assigner)
             if hasattr(self.train_cfg, 'sampler'):
@@ -152,7 +155,10 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
     def _init_layers(self):
         self.convs_bridge = nn.ModuleList()
         self.convs_pred = nn.ModuleList()
+        # in_channels=[512, 256, 128],
+        # out_channels=[1024, 512, 256],
         for i in range(self.num_levels):
+            # conv + bn + LeakyReLU(default)
             conv_bridge = ConvModule(
                 self.in_channels[i],
                 self.out_channels[i],
@@ -161,6 +167,8 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
                 conv_cfg=self.conv_cfg,
                 norm_cfg=self.norm_cfg,
                 act_cfg=self.act_cfg)
+            # num_base_priors: int: Number of anchors on each point of feature map.
+            # num_attrib: int: number of attributes in pred_map, bboxes (4) + objectness (1) + num_classes"""
             conv_pred = nn.Conv2d(self.out_channels[i],
                                   self.num_base_priors * self.num_attrib, 1)
 
@@ -194,16 +202,98 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
             tuple[Tensor]: A tuple of multi-level predication map, each is a
                 4D-tensor of shape (batch_size, 5+num_classes, height, width).
         """
+        _, pred_maps, _ = self.get_feat_pred_predpost(feats)
+        return tuple(pred_maps), 
+        # assert len(feats) == self.num_levels
+        # pred_maps = []
+        # for i in range(self.num_levels):
+        #     x = feats[i]
+        #     x = self.convs_bridge[i](x)
+        #     pred_map = self.convs_pred[i](x)
+        #     pred_maps.append(pred_map)
 
+        # return tuple(pred_maps),
+
+    def forward_da(self, feats):
+        """Forward features from the upstream network.
+
+        Args:
+            feats (tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+
+        Returns:
+            feat_maps: [Tensor], (batch_size, out_channels, height, width) 
+            pred_maps: [Tensor], A tuple of multi-level predication map, each is a
+                4D-tensor of shape (batch_size, 5+num_classes, height, width).
+        """
+
+        feat_maps, _, pred_post_maps = self.get_feat_pred_predpost(feats)
+        return feat_maps, pred_post_maps
+        # assert len(feats) == self.num_levels
+        # pred_maps = []
+        # feat_maps = []
+        # for i in range(self.num_levels):
+        #     x = feats[i]
+        #     x = self.convs_bridge[i](x)
+        #     feat_maps.append(x)  
+        #     pred_map = self.convs_pred[i](x)
+        #     N,C,H,W = pred_map.shape
+        #     # (b,h, w, num_anchors*num_attrib) ->
+        #     # (b,h*w*num_anchors, num_attrib)
+        #     pred_map = pred_map.permute(0, 2, 3,
+        #                                 1).reshape(N, -1,
+        #                                            self.num_attrib)
+        #     pred_maps.append(pred_map)
+        # return feat_maps, pred_maps
+
+    def return_feat_pred(self, feats):
+        """Forward features from the upstream network.
+
+        Args:
+            feats (tuple[Tensor]): Features from the upstream network, each is
+                a 4D-tensor.
+
+        Returns:
+            feat_maps: [Tensor], (batch_size, out_channels, height, width) 
+            pred_maps: [Tensor], A tuple of multi-level predication map, each is a
+                4D-tensor of shape (batch_size, 5+num_classes, height, width).
+        """
+        feat_maps, pred_maps, _ = self.get_feat_pred_predpost(feats)
+        return feat_maps, pred_maps
+        # assert len(feats) == self.num_levels
+        # pred_maps = []
+        # feat_maps = []
+        # for i in range(self.num_levels):
+        #     x = feats[i]
+        #     x = self.convs_bridge[i](x)
+        #     feat_maps.append(x)  
+        #     pred_map = self.convs_pred[i](x)
+        #     pred_maps.append(pred_map)
+        # return feat_maps, pred_maps
+
+    def get_feat_pred_predpost(self, feats):
         assert len(feats) == self.num_levels
+        feat_maps = []
         pred_maps = []
+        pred_post_maps = []
+        eps = torch.finfo(torch.float).eps
         for i in range(self.num_levels):
             x = feats[i]
             x = self.convs_bridge[i](x)
+            ### norm is not a good idea
+            # x = x / (x.norm(dim=1, keepdim=True) + eps)
             pred_map = self.convs_pred[i](x)
+            N,C,H,W = pred_map.shape
+            # (b,h, w, num_anchors*num_attrib) ->
+            # (b,h*w*num_anchors, num_attrib)
+            pred_post_map = pred_map.permute(0, 2, 3,
+                                        1).reshape(N, -1,
+                                                   self.num_attrib)
+            feat_maps.append(x)  
             pred_maps.append(pred_map)
+            pred_post_maps.append(pred_post_map)
+        return feat_maps, pred_maps, pred_post_maps
 
-        return tuple(pred_maps),
 
     @force_fp32(apply_to=('pred_maps', ))
     def get_bboxes(self,
@@ -339,7 +429,10 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
 
         target_maps_list, neg_maps_list = self.get_targets(
             anchor_list, responsible_flag_list, gt_bboxes, gt_labels)
-
+        # input([item.shape for item in pred_maps]) 
+        # [torch.Size([8, 33, 14, 19]), torch.Size([8, 33, 28, 38]), torch.Size([8, 33, 56, 76])]
+        # input([item.shape for item in target_maps_list]) 
+        # [torch.Size([16, 1026, 11]), torch.Size([16, 4104, 11]), torch.Size([16, 16416, 11])]
         losses_cls, losses_conf, losses_xy, losses_wh = multi_apply(
             self.loss_single, pred_maps, target_maps_list, neg_maps_list)
 
@@ -364,8 +457,8 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
                 loss_xy (Tensor): Regression loss of x, y coordinate.
                 loss_wh (Tensor): Regression loss of w, h coordinate.
         """
-
-        num_imgs = len(pred_map)
+        # n,c,h,w -> n,h,w,c -> n,h*w*3, 5+classnum 
+        num_imgs = len(pred_map) # 
         pred_map = pred_map.permute(0, 2, 3,
                                     1).reshape(num_imgs, -1, self.num_attrib)
         neg_mask = neg_map.float()
@@ -385,10 +478,23 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
         target_wh = target_map[..., 2:4]
         target_conf = target_map[..., 4]
         target_label = target_map[..., 5:]
-
+        # print(pred_label.shape) # torch.Size([16, 969, 6])
+        # print(target_label.shape) torch.Size([16, 969, 6])
+        # print(pred_conf.shape) # torch.Size([16, 969])
+        # print(target_conf.shape) # torch.Size([16, 969])
+        # print(pos_and_neg_mask.shape) # torch.Size([16, 969])
+        # input('ltarget')
         loss_cls = self.loss_cls(pred_label, target_label, weight=pos_mask)
-        loss_conf = self.loss_conf(
-            pred_conf, target_conf, weight=pos_and_neg_mask)
+
+        if self.focal:
+            alpha = 0.25
+            pos_and_neg_mask_focal = torch.pow((1-torch.sigmoid(pred_conf)),2) * (1-alpha) * pos_mask.squeeze()
+            pos_and_neg_mask_focal += torch.pow(torch.sigmoid(pred_conf),2) * alpha * neg_mask
+            loss_conf = 10 * self.loss_conf(
+                pred_conf, target_conf, weight=pos_and_neg_mask_focal)
+        else:
+            loss_conf = self.loss_conf(
+                pred_conf, target_conf, weight=pos_and_neg_mask)
         loss_xy = self.loss_xy(pred_xy, target_xy, weight=pos_mask)
         loss_wh = self.loss_wh(pred_wh, target_wh, weight=pos_mask)
 

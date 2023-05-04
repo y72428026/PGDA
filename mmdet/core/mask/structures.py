@@ -231,7 +231,6 @@ class BitmapMasks(BaseInstanceMasks):
                 assert masks[0].ndim == 2  # (H, W)
             else:
                 assert masks.ndim == 3  # (N, H, W)
-
             self.masks = np.stack(masks).reshape(-1, height, width)
             assert self.masks.shape[1] == self.height
             assert self.masks.shape[2] == self.width

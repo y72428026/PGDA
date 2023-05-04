@@ -12,9 +12,49 @@ from mmcv.runner import init_dist, load_checkpoint, wrap_fp16_model
 
 from mmdet.datasets import (build_dataloader, build_dataset,
                             replace_ImageToTensor)
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
 from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector_mine
+from mmdet.models import build_detector
+from mmdet.models import build_detector_mine
 from mmdet.utils import replace_cfg_vals, update_data_root
+from thop import profile
 
+from thop import profile
+
+from thop import profile
 
 def parse_args():
     parser = argparse.ArgumentParser(description='MMDet benchmark a model')
@@ -82,7 +122,8 @@ def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
 
     # build the model and load checkpoint
     cfg.model.train_cfg = None
-    model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    # model = build_detector(cfg.model, test_cfg=cfg.get('test_cfg'))
+    model = build_detector_mine(cfg, test_cfg=cfg.get('test_cfg'))
     fp16_cfg = cfg.get('fp16', None)
     if fp16_cfg is not None:
         wrap_fp16_model(model)
@@ -110,6 +151,7 @@ def measure_inference_speed(cfg, checkpoint, max_iter, log_interval,
         with torch.no_grad():
             model(return_loss=False, rescale=True, **data)
 
+            # input(profile(model, inputs=(data['img'], data['img_metas'], False)))
         torch.cuda.synchronize()
         elapsed = time.perf_counter() - start_time
 
@@ -146,7 +188,59 @@ def repeat_measure_inference_speed(cfg,
     for _ in range(repeat_num):
         #
         cp_cfg = copy.deepcopy(cfg)
+        
 
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
+
+        
         fps_list.append(
             measure_inference_speed(cp_cfg, checkpoint, max_iter, log_interval,
                                     is_fuse_conv_bn))

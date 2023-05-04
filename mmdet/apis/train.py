@@ -187,7 +187,6 @@ def train_detector(model,
         optimizer_config = OptimizerHook(**cfg.optimizer_config)
     else:
         optimizer_config = cfg.optimizer_config
-
     # register hooks
     runner.register_training_hooks(
         cfg.lr_config,
@@ -231,6 +230,7 @@ def train_detector(model,
         runner.register_hook(
             eval_hook(val_dataloader, **eval_cfg), priority='LOW')
 
+    # input('start resume')
     resume_from = None
     if cfg.resume_from is None and cfg.get('auto_resume'):
         resume_from = find_latest_checkpoint(cfg.work_dir)
@@ -241,4 +241,5 @@ def train_detector(model,
         runner.resume(cfg.resume_from)
     elif cfg.load_from:
         runner.load_checkpoint(cfg.load_from)
+    # input('start runner.run')
     runner.run(data_loaders, cfg.workflow)

@@ -1,6 +1,6 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import os.path as osp
-import pickle
+import pickle, os
 import shutil
 import tempfile
 import time
@@ -25,6 +25,7 @@ def single_gpu_test(model,
     PALETTE = getattr(dataset, 'PALETTE', None)
     prog_bar = mmcv.ProgressBar(len(dataset))
     for i, data in enumerate(data_loader):
+        # batch_size = len(data['gt_labels'])
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
 
@@ -49,7 +50,19 @@ def single_gpu_test(model,
                     out_file = osp.join(out_dir, img_meta['ori_filename'])
                 else:
                     out_file = None
-
+    #             ### to visualize gt
+    #             model.module.show_gt_result(
+    #                 img_show,
+    #                 data['gt_bboxes'],
+    #                 data['gt_labels'],
+    #                 None,
+    #                 bbox_color=PALETTE,
+    #                 text_color=PALETTE,
+    #                 mask_color=PALETTE,
+    #                 show=show,
+    #                 out_file=out_file,
+    #                 score_thr=show_score_thr)
+    # return None
                 model.module.show_result(
                     img_show,
                     result[i],
@@ -59,7 +72,6 @@ def single_gpu_test(model,
                     show=show,
                     out_file=out_file,
                     score_thr=show_score_thr)
-
         # encode mask results
         if isinstance(result[0], tuple):
             result = [(bbox_results, encode_mask_results(mask_results))
@@ -70,7 +82,6 @@ def single_gpu_test(model,
                 bbox_results, mask_results = result[j]['ins_results']
                 result[j]['ins_results'] = (bbox_results,
                                             encode_mask_results(mask_results))
-
         results.extend(result)
 
         for _ in range(batch_size):

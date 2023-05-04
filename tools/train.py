@@ -16,11 +16,11 @@ from mmcv.utils import get_git_hash
 from mmdet import __version__
 from mmdet.apis import init_random_seed, set_random_seed, train_detector
 from mmdet.datasets import build_dataset
-from mmdet.models import build_detector
+from mmdet.models import build_detector, build_detector_mine
 from mmdet.utils import (collect_env, get_device, get_root_logger,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
-
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
@@ -107,7 +107,7 @@ def parse_args():
 
 def main():
     args = parse_args()
-
+    torch.cuda.set_device(args.gpu_id)
     cfg = Config.fromfile(args.config)
 
     # replace the ${key} with the value of cfg.key
@@ -131,6 +131,8 @@ def main():
                           ' configuration file. Please update all the '
                           'configuration files to mmdet >= 2.24.1.')
 
+
+
     # set multi-process settings
     setup_multi_processes(cfg)
 
@@ -149,7 +151,7 @@ def main():
 
     if args.resume_from is not None:
         cfg.resume_from = args.resume_from
-    cfg.auto_resume = args.auto_resume
+    # cfg.auto_resume = args.auto_resume
     if args.gpus is not None:
         cfg.gpu_ids = range(1)
         warnings.warn('`--gpus` is deprecated because we only support '
@@ -173,6 +175,19 @@ def main():
         # re-set gpu_ids with distributed training mode
         _, world_size = get_dist_info()
         cfg.gpu_ids = range(world_size)
+    
+    if dist.is_available() and dist.is_initialized():
+        rank = dist.get_rank()
+    else:
+        rank = 0
+    if not distributed or rank == 0:
+        if os.path.exists(args.work_dir):
+            if os.path.exists(args.work_dir+'/latest.pth'): 
+                cfg.auto_resume = True
+                shutil.rmtree(args.work_dir+'/da_heads_backup')
+            else:
+                shutil.rmtree(args.work_dir)
+        shutil.copytree('./mmdet/models/da_heads/', args.work_dir+'/da_heads_backup')
 
     # create work_dir
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
@@ -209,8 +224,13 @@ def main():
     meta['seed'] = seed
     meta['exp_name'] = osp.basename(args.config)
 
-    model = build_detector(
-        cfg.model,
+    # model = build_detector(
+    #     cfg.model,
+    #     train_cfg=cfg.get('train_cfg'),
+    #     test_cfg=cfg.get('test_cfg'))
+
+    model = build_detector_mine(
+        cfg,
         train_cfg=cfg.get('train_cfg'),
         test_cfg=cfg.get('test_cfg'))
     model.init_weights()
