@@ -5,15 +5,13 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description='help demo,what writted here will be displaced in the first part of the help message.')
     parser.add_argument('--path', default='.', help='the architecture of CNN, at this time we only support alexnet and vgg.')
+    parser.add_argument('--gpu', default=0, help='the index of gpu.')
     args = parser.parse_args() 
     return args
 args = parse_args()
 path_json=''
-
-path = os.path.join('/home/yebh/mmdetection/', args.path)
-# path = '/home/yebh/mmdetection/work_dirs/test_dataset/L2T_SCL/CFA_608/uda_yolov3_L2T_SCL-100e-1h1h0-0-ohem-gpu2-v0'
-# find json file
-# read json
+root_path = '/home/yebh/mmdetection/'
+path = os.path.join(root_path, args.path)
 list_json = []
 dict_ap50 = dict()
 dict_apall = dict()
@@ -55,5 +53,38 @@ for i in range(274,-1,-1):
                 latest_checkpoint += 1
 
 
+def multi_test(work_dir, gpu=0):
+    # find config file
+    file_list = os.listdir(work_dir)
+    top_iter_dir=''
+    config_dir=''
+    for file_name in file_list:
+        if file_name.endswith('.py'):
+            config_name = file_name
+            config_dir = os.path.join(work_dir, file_name)
+        elif file_name.endswith('txt'):
+            top_iter_name = file_name
+            top_iter_dir = os.path.join(work_dir, top_iter_name)
+    if top_iter_dir != '':
+        # read top iter and 
+        with open(top_iter_dir, 'r') as f:
+            for i in range(10):
+                line = f.readline().strip('\n')
+                iter = int(line.split(',')[0][1:])
+                model_dir=f"{work_dir}/epoch_{iter}.pth"
+                old_log_dir=f"{work_dir}/0_{i}th_{iter}iter.log"
+                log_dir=f'{work_dir}/0_{i}th_{iter}_APARF.log'
+                show_dir=f"{work_dir}/{iter}_image"
+                # print(log_dir)
+                if not os.path.exists(log_dir):
+                    if os.path.exists(old_log_dir):
+                        os.remove(old_log_dir)
+                    os.system(f'CUDA_VISIBLE_DEVICES={gpu} python tools/test.py \
+                        {config_dir} \
+                        {model_dir} \
+                        --eval bbox \
+                        --eval-options "classwise=True" \
+                        --log_dir {log_dir}')
 
-
+# test
+multi_test(path, args.gpu)
