@@ -99,8 +99,8 @@ mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1h00-00875-T05-a1.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1h1h0-0.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1h1h0-00875-T05-a1.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1k1k0-0.py
-mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1t1t0-0 copy.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1t1t0-0.py
+mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1t1t0-00875-T05-a01.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-1t1t0-00875-T05-a1.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-330-0.py
 mmdet/.mim/configs/uda_608/100e/uda_yolov3_L2T_SCL-100e-330-00875-T05-a1.py

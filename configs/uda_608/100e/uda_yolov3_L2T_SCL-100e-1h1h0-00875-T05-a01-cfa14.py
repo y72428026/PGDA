@@ -14,6 +14,7 @@ uda=dict(
     cfa_thres=0.5,
     enable_category_loss=True,
     category_weight=0.0875,
-    alpha_mb=1,
+    alpha_mb=0.1,
+    cfa_v=14
     )
 

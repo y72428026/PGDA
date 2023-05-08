@@ -241,10 +241,16 @@ class UDAModel(SingleStageDetector):
                 # hyper parameter test
                 pred_map_mask = (pred_map_per_level_cls > thres) # (N, H, W, 6)
                 # if conf < 0.5 and cls < 0.5, then cls is not dependable
-                if self.cfa_v == 9:
+                if self.cfa_v == 9: 
                     pred_map_per_level_cls = conf_mask * pred_map_mask * pred_map_per_level_cls # (N, H, W, 6)
                 elif self.cfa_v == 11:
-                    pred_map_per_level_cls = conf_mask * pred_map_mask * pred_map_per_level_cls * pred_map_per_level_conf # (N, H, W, 6)
+                    pred_map_per_level_cls = conf_mask * pred_map_per_level_conf * pred_map_mask * pred_map_per_level_cls  # (N, H, W, 6)
+                elif self.cfa_v == 12:
+                    pred_map_per_level_cls = conf_mask * pred_map_per_level_conf * pred_map_per_level_cls  # (N, H, W, 6)
+                elif self.cfa_v == 13:
+                    pred_map_per_level_cls = pred_map_mask * pred_map_per_level_cls   # (N, H, W, 6)
+                elif self.cfa_v == 14:
+                    pred_map_per_level_cls = conf_mask * pred_map_per_level_cls   # (N, H, W, 6)
             else:
                 pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, 11)
                 conf_mask = pred_map_per_level[...,4].sum(dim=-1).unsqueeze(-1).clamp(-1,1)
