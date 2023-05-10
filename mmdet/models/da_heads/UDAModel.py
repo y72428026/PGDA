@@ -64,7 +64,13 @@ class UDAModel(SingleStageDetector):
         self.grl_img = GradientScalarLayer(-1.0)
         self.loss_keys = None
         # lossW 
-        self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(1.0, dtype=torch.float)) for _ in range(20)])
+        if self.cfa_v == 16:
+            self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(1.0, dtype=torch.float)), # conf_mask
+                                             nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_mask
+                                             nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_per_level_conf
+                                             ])
+        else:
+            self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(0.0, dtype=torch.float)) for _ in range(3)])
         # category loss
         self.enable_category_loss = enable_category_loss
         self.category_weight = category_weight 
@@ -251,6 +257,19 @@ class UDAModel(SingleStageDetector):
                     pred_map_per_level_cls = pred_map_mask * pred_map_per_level_cls   # (N, H, W, 6)
                 elif self.cfa_v == 14:
                     pred_map_per_level_cls = conf_mask * pred_map_per_level_cls   # (N, H, W, 6)
+                ### use a as the weight beteween 1 and each tensor, use the SGD to update the weight
+                elif self.cfa_v == 15:
+                    weight = self.loss_weight
+                    conf_mask = conf_mask * torch.sigmoid(weight[0]) + (1 - torch.sigmoid(weight[0]))*torch.ones_like(conf_mask)
+                    pred_map_mask = pred_map_mask * torch.sigmoid(weight[1]) + (1 - torch.sigmoid(weight[1]))*torch.ones_like(pred_map_mask)
+                    pred_map_per_level_conf = pred_map_per_level_conf * torch.sigmoid(weight[2]) + (1 - torch.sigmoid(weight[2]))*torch.ones_like(pred_map_per_level_conf)              
+                    pred_map_per_level_cls = conf_mask * pred_map_per_level_conf * pred_map_mask * pred_map_per_level_cls  # (N, H, W, 6)
+                elif self.cfa_v == 16:
+                    weight = [torch.clamp(self.loss_weight[i], min=0, max=1) for i in range(len(self.loss_weight))]
+                    conf_mask = conf_mask * weight[0] + (1 - weight[0])*torch.ones_like(conf_mask)
+                    pred_map_mask = pred_map_mask * weight[1] + (1 - weight[1])*torch.ones_like(pred_map_mask)
+                    pred_map_per_level_conf = pred_map_per_level_conf * weight[2] + (1 - weight[2])*torch.ones_like(pred_map_per_level_conf)              
+                    pred_map_per_level_cls = conf_mask * pred_map_per_level_conf * pred_map_mask * pred_map_per_level_cls  # (N, H, W, 6)
             else:
                 pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, 11)
                 conf_mask = pred_map_per_level[...,4].sum(dim=-1).unsqueeze(-1).clamp(-1,1)
@@ -380,6 +399,7 @@ class UDAModel(SingleStageDetector):
                 profile=None,
                 sci_mode=False
             )
+            mmcv.print_log(f'cate weight: {[self.loss_weight[i] for i in range(len(self.loss_weight))]} ', 'mmdet')
             mmcv.print_log(f'layer_lvl: {layer_lvl} ', 'mmdet')
             mmcv.print_log(f'src_weight_{layer_lvl}: {self.src_weight[layer_lvl].t()} ', 'mmdet')
             mmcv.print_log(f'trg_weight_{layer_lvl}: {self.trg_weight[layer_lvl].t()} ', 'mmdet')
