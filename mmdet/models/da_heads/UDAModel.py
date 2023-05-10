@@ -59,8 +59,8 @@ class UDAModel(SingleStageDetector):
                 self.auxiliary_head.append(build_head(cfg['model']['bbox_head']))
         self.train_cfg = cfg['model']['train_cfg']
         self.test_cfg = cfg['model']['test_cfg']
-        # input(cfg.get('cfa_thres',0.5))
-        self.cfa_thres = cfg.get('cfa_thres',0.5)
+        self.conf_thres = cfg.get('cfa_conf_thres')
+        self.pred_thres = cfg.get('cfa_pred_thres')
         self.grl_img = GradientScalarLayer(-1.0)
         self.loss_keys = None
         # lossW 
@@ -229,7 +229,6 @@ class UDAModel(SingleStageDetector):
         anchor_list = []
         weight_list = []
         eps = torch.finfo(torch.float).eps
-        thres =  self.cfa_thres
         for i in range(3):
             N, C, H, W = feat_maps[i].shape
             feat_map_per_level = feat_maps[i].permute(0, 2, 3, 1) # (N, H, W, C)
@@ -239,13 +238,13 @@ class UDAModel(SingleStageDetector):
                 pred_map_per_level_conf, index = pred_map_per_level_conf.max(dim=-1) # (N, H, W)
                 # hyper parameter test
                 pred_map_per_level_conf = pred_map_per_level_conf.unsqueeze(-1) # (N, H, W, 1)
-                conf_mask = (pred_map_per_level_conf > thres) # (N, H, W, 1)
+                conf_mask = (pred_map_per_level_conf > self.conf_thres) # (N, H, W, 1)
                 index = index.unsqueeze(-1).unsqueeze(-1).repeat([1,1,1,1,6]) # (N, H, W, 1, 6)
                 pred_map_per_level_cls = pred_map_per_level[...,5:].sigmoid() # (N, H, W, 3, 6)
                 # Get the probability prediction corresponding to the anchor most likely to find the object
                 pred_map_per_level_cls = torch.gather(pred_map_per_level_cls, -2, index).squeeze_(-2) # (N, H, W, 6)
                 # hyper parameter test
-                pred_map_mask = (pred_map_per_level_cls > thres) # (N, H, W, 6)
+                pred_map_mask = (pred_map_per_level_cls > self.pred_thres) # (N, H, W, 6)
                 # if conf < 0.5 and cls < 0.5, then cls is not dependable
                 if self.cfa_v == 9: 
                     pred_map_per_level_cls = conf_mask * pred_map_mask * pred_map_per_level_cls # (N, H, W, 6)
@@ -300,7 +299,8 @@ class UDAModel(SingleStageDetector):
         anchor_list = []
         weight_list = []
         eps = torch.finfo(torch.float).eps
-        thres =  self.cfa_thres
+        conf_thres =  self.conf_thres
+        pred_thres =  self.pred_thres
         for i in range(3):
             N, C, H, W = feat_maps[i].shape
             feat_map_per_level = feat_maps[i].permute(0, 2, 3, 1) # (N, H, W, C)
@@ -309,13 +309,13 @@ class UDAModel(SingleStageDetector):
                 pred_map_per_level_conf = (pred_map_per_level[...,4]).sigmoid() # (N, H, W, 3)
                 # pred_map_per_level_conf, index = pred_map_per_level_conf.max(dim=-1) # (N, H, W)
                 # hyper parameter test
-                conf_mask = (pred_map_per_level_conf > thres).unsqueeze(-1) # (N, H, W, 3, 1)
+                conf_mask = (pred_map_per_level_conf > conf_thres).unsqueeze(-1) # (N, H, W, 3, 1)
                 # index = index.unsqueeze(-1).unsqueeze(-1).repeat([1,1,1,1,6]) # (N, H, W, 1, 6)
                 pred_map_per_level_cls = pred_map_per_level[...,5:].sigmoid() # (N, H, W, 3, 6)
                 # Get the probability prediction corresponding to the anchor most likely to find the object
                 # pred_map_per_level_cls = torch.gather(pred_map_per_level_cls, -2, index).squeeze_(-2) # (N, H, W, 6)
                 # hyper parameter test
-                pred_map_mask = (pred_map_per_level_cls > thres) # (N, H, W, 3, 6)
+                pred_map_mask = (pred_map_per_level_cls > pred_thres) # (N, H, W, 3, 6)
                 # if conf < 0.5 and cls < 0.5, then cls is not dependable
                 pred_map_per_level_cls = conf_mask * pred_map_mask * pred_map_per_level_cls # (N, H, W, 3, 6)
             else:
@@ -337,8 +337,6 @@ class UDAModel(SingleStageDetector):
             anchor = torch.stack(anchor, dim=0)
             anchor_list.append(anchor) 
             weight_list.append(weight)
-            ### !!!
-            # self.update_memory_bank(anchor, weight, i, sign)
         return anchor_list, weight_list
   
 

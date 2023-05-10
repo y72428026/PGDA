@@ -1,24 +1,23 @@
 import os
-root_path = '/home/yebh/mmdetection/configs/uda_608/sh'
+# root_path = '/home/yebh/mmdetection/configs/uda_608/shv2'
+root_path = '/media/data3/yebh/code/mmdet2/configs/uda_608/shv2'
 template_name = 'uda_yolov3_L2T_SCL_template.py'
 template_path = os.path.join(root_path,template_name)
 
 dataset='L2T'
 # GFA weight
-DA='1h00'
+DA='1h1h0'
 DA_w0=100
-DA_w1=0
+DA_w1=100
 DA_w2=0
 
 # CFA weight
 cfa_weight=0.0875
-# cfg_v_list=[9,11,12,13,14]
-cfg_v_list=[16]
-# T_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-# a_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+cfg_v_list=[9]
+# [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 conf_T_list=[0.5]
 pred_T_list=[0.5]
-a_list=[0.1,1]
+a_list=[0.1, 1]
 
 # if use fp16
 # fp16='-fp16'
@@ -34,7 +33,7 @@ for conf_T in conf_T_list:
         for a in a_list:
             for cfg_v in cfg_v_list:
                 # name
-                new_cfg_name = f'uda-yolov3-{dataset}-SCL-Xohem-{DA}-cfav{cfg_v}-{cfa_weight}-cT{conf_T}-pT{pred_T}a{a}{fp16}.py'
+                new_cfg_name = f'uda-yolov3-{dataset}-SCL-Xohem-100e-{DA}-cfav{cfg_v}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py'
                 print(new_cfg_name)
                 with open(template_path, "r") as f:
                     srcCfg = f.read().split("\n")

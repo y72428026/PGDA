@@ -1,4 +1,4 @@
-import json, os
+import json, os, sys
 
 import argparse
 def parse_args():
@@ -10,7 +10,8 @@ def parse_args():
     return args
 args = parse_args()
 path_json=''
-root_path = '/home/yebh/mmdetection/'
+root_path = os.getcwd()
+input(root_path)
 path = os.path.join(root_path, args.path)
 list_json = []
 dict_ap50 = dict()
@@ -35,7 +36,7 @@ path_result = os.path.join(path,  f'{path_json.split("/")[-1].split(".")[0]}.txt
 # save result
 list_sort = sorted(dict_ap50.items(), key = lambda kv:(kv[1], kv[0]), reverse=True)
 with open(path_result, 'w') as load_f:
-    for line in list_sort[:30]:
+    for line in list_sort[:15]:
         load_f.write(str(list((line[0],dict_apall[line[0]]))))
         load_f.write('\n')
         dict_top[line[0]] = line[1]

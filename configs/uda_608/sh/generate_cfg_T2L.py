@@ -9,13 +9,12 @@ DA='75k75k0'
 DA_w0=7500
 DA_w1=7500
 DA_w2=0
+
 # CFA weight
 cfa_weight=0.0625
-# cfg_list=[9,11,12,13,14]
-cfg_v_list=[15]
-# T_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+cfg_v_list=[9]
+# [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 T_list=[0.3]
-# a_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 a_list=[0.7]
 # if use fp16
 fp16='-fp16'
@@ -43,11 +42,12 @@ for T in T_list:
                 srcCfg[9-1] =f'        img_weight={DA_w1},'
                 srcCfg[12-1]=f'        img_weight={DA_w2},'
                 # CFA weight
-                srcCfg[14-1] =f'    cfa_thres={T},'
-                srcCfg[15-1] =f'    enable_category_loss=True,'
-                srcCfg[16-1] =f'    category_weight={cfa_weight},'
-                srcCfg[17-1] =f'    alpha_mb={a},'
-                srcCfg[18-1] =f'    cfa_v={cfg_v},'
+                srcCfg[14-1] =f'    cfa_conf_thres={T},'
+                srcCfg[15-1] =f'    cfa_pred_thres={T},'
+                srcCfg[16-1] =f'    enable_category_loss=True,'
+                srcCfg[17-1] =f'    category_weight={cfa_weight},'
+                srcCfg[18-1] =f'    alpha_mb={a},'
+                srcCfg[19-1] =f'    cfa_v={cfg_v},'
                 f.close()
                 with open(os.path.join(new_cfg_path, new_cfg_name), "w") as f:
                     f.write('\n'.join(srcCfg))

@@ -131,7 +131,10 @@ test_pipeline = [
         ])
 ]
 dataset_type = 'CocoDataset_mine'
-dataset_dir = '/home/yebh/'
+# dataset_dir = '/home/yebh/'
+import sys
+syspath = sys.path[0]
+dataset_dir = syspath[:syspath.find('yebh')]+'yebh/'
 classes = (
     'triangle offset' ,
     'leftover material',

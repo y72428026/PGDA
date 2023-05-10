@@ -145,7 +145,9 @@ test_pipeline = [
 ]
 dataset_type = 'CocoDataset_mine'
 # dataset_dir = '/home/yebh/' 
-dataset_dir = '/media/data3/yebh/' 
+import os
+trainpath = os.getcwd()
+dataset_dir = trainpath[:trainpath.find('yebh')]+'yebh/'
 classes = (
     'triangle offset' ,
     'leftover material',
@@ -156,7 +158,7 @@ classes = (
 
 data = dict(
     samples_per_gpu=samples_per_gpu,
-    workers_per_gpu=4,
+    workers_per_gpu=16,
     train=dict( 
         _delete_=True,
         type='UDADataset',
