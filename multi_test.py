@@ -18,7 +18,7 @@ def multi_test(work_fdir, gpu=0):
         if top_iter_dir != '':
             # read top iter and 
             with open(top_iter_dir, 'r') as f:
-                for i in range(10):
+                for i in range(20):
                     line = f.readline().strip('\n')
                     iter = int(line.split(',')[0][1:])
                     model_dir=f"{work_dir}/epoch_{iter}.pth"
@@ -66,8 +66,10 @@ def multi_test(work_fdir, gpu=0):
 # work_fdir = '/home/yebh/work_dirs_remote/test_dataset/T2L_SCL_608/CFA'
 # multi_test(work_fdir, gpu=6)
 
-work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/L2T_SCL/CFA_608/'
-multi_test(work_fdir, gpu=5)
+# work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/L2T_SCL/CFA_608/'
+# multi_test(work_fdir, gpu=5)
 
-work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/T2L_SCL/CFA_608/'
+# work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/T2L_SCL/CFA_608/'
+# multi_test(work_fdir, gpu=5)
+work_fdir = '/home/yebh/work_dirs_remote/test_dataset/L2T_SCL_608/ok_/albation-structure/Xohem'
 multi_test(work_fdir, gpu=5)

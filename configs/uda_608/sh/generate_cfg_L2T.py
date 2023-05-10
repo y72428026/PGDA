@@ -1,5 +1,5 @@
 import os
-root_path = '/media/data3/yebh/code/mmdet2/configs/uda_608/sh'
+root_path = '/home/yebh/mmdetection/configs/uda_608/sh'
 template_name = 'uda_yolov3_L2T_SCL_template.py'
 template_path = os.path.join(root_path,template_name)
 
@@ -12,7 +12,8 @@ DA_w2=0
 
 # CFA weight
 cfa_weight=0.0875
-cfg_v_list=[9,11,12,13,14]
+# cfg_v_list=[9,11,12,13,14]
+cfg_v_list=[16]
 # T_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 # a_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 T_list=[0.5]
