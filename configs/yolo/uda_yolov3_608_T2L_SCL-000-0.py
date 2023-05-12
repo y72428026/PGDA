@@ -4,7 +4,8 @@ _base_ = [  './yolov3_d53_mstrain-608_273e_coco.py', ]
 # samples_per_gpu=32
 samples_per_gpu=16
 evaluation = dict(interval=1, metric=['bbox'], start=30)
-log_config = dict(interval=15)
+# evaluation = dict(interval=1, metric=['bbox'], start=30, save_best='auto', max='bbox_mAP_50')
+log_config = dict(interval=30)
 find_unused_parameters=True
 
 model = dict(

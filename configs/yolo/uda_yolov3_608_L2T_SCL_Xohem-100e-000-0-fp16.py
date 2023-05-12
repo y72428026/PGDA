@@ -4,7 +4,7 @@ fp16 = dict(loss_scale='dynamic')
 samples_per_gpu=32
 # samples_per_gpu=16
 evaluation = dict(interval=1, metric=['bbox'], start=10)
-log_config = dict(interval=15)
+log_config = dict(interval=30)
 find_unused_parameters=True
 
 model = dict(
