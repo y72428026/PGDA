@@ -187,7 +187,7 @@ def main():
                 shutil.rmtree(args.work_dir+'/da_heads_backup')
             else:
                 shutil.rmtree(args.work_dir)
-        shutil.copytree('./mmdet/models/da_heads/', args.work_dir+'/da_heads_backup')
+        shutil.copytree('../mmdet/models/da_heads/', args.work_dir+'/da_heads_backup')
 
     # create work_dir
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))

@@ -1,7 +1,7 @@
 import os
 import sys
 root_path = sys.path[0]
-input(root_path)
+# input(root_path)
 template_name = 'uda_yolov3_T2L_SCL_template.py'
 template_path = os.path.join(root_path,template_name)
 
@@ -16,8 +16,10 @@ cfa_weight=0.0625
 cfg_v_list=[9]
 # [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 conf_T_list=[0.3]
-pred_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-a_list=[0.7]
+# pred_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+pred_T_list=[0.7]
+a_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+# a_list=[0.7]
 
 # if use fp16
 # fp16='-fp16'

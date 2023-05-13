@@ -662,7 +662,7 @@ class CocoDataset(CustomDataset):
                     ar50_classwise = _summarize_ar(cocoEval_50)
                     f_score = np.zeros([len(ap50_classwise)])
                     for i in range(len(ap50_classwise)):
-                        f_score[i] = 2 * ap50_classwise[i] * ar50_classwise[i] /(ap50_classwise[i] + ar50_classwise[i])
+                        f_score[i] = 2 * ap50_classwise[i] * ar50_classwise[i] /(ap50_classwise[i] + ar50_classwise[i] + 0.0000001)
                     print('\nF_score50')
                     print(f_score)
                     print(np.mean(f_score))

@@ -1,6 +1,7 @@
-import os
+import os, sys
 # root_path = '/home/yebh/mmdetection/configs/uda_608/shv2'
-root_path = os.getcwd()
+# root_path = os.getcwd()
+root_path = sys.path[0]
 # root_path = '/media/data3/yebh/code/mmdet2/configs/uda_608/shv2'
 template_name = 'uda_yolov3_L2T_SCL_template.py'
 template_path = os.path.join(root_path,template_name)
@@ -16,9 +17,11 @@ DA_w2=0
 cfa_weight=0.0875
 cfg_v_list=[9]
 # [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-conf_T_list=[0.5]
+conf_T_list=[0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+# conf_T_list=[0.5]
 pred_T_list=[0.1]
-a_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+# a_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+a_list=[0.8]
 
 # if use fp16
 # fp16='-fp16'
