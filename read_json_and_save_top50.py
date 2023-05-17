@@ -10,7 +10,8 @@ def parse_args():
     return args
 args = parse_args()
 path_json=''
-root_path = os.getcwd()
+# root_path = os.getcwd()
+root_path = sys.path[0]
 # input(root_path)
 path = os.path.join(root_path, args.path)
 list_json = []
