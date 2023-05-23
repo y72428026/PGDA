@@ -38,6 +38,11 @@ def parse_args():
         default=0.5,
         help='IoU threshold to be considered as matched')
     parser.add_argument(
+        '--tag',
+        type=str,
+        default='',
+        help='tag to rename the confusion matrix file name')
+    parser.add_argument(
         '--nms-iou-thr',
         type=float,
         default=None,
@@ -148,7 +153,8 @@ def plot_confusion_matrix(confusion_matrix,
                           save_dir=None,
                           show=True,
                           title='Normalized Confusion Matrix',
-                          color_theme='plasma'):
+                          color_theme='plasma',
+                          tag=''):
     """Draw confusion matrix with matplotlib.
 
     Args:
@@ -167,7 +173,8 @@ def plot_confusion_matrix(confusion_matrix,
 
     num_classes = len(labels)
     fig, ax = plt.subplots(
-        figsize=(0.5 * num_classes, 0.5 * num_classes * 0.8), dpi=180)
+        # figsize=(0.5 * num_classes, 0.5 * num_classes * 0.8), dpi=180)
+        figsize=(1 * num_classes, 1 * num_classes * 0.8), dpi=180)
     cmap = plt.get_cmap(color_theme)
     im = ax.imshow(confusion_matrix, cmap=cmap)
     plt.colorbar(mappable=im, ax=ax)
@@ -222,7 +229,7 @@ def plot_confusion_matrix(confusion_matrix,
     fig.tight_layout()
     if save_dir is not None:
         plt.savefig(
-            os.path.join(save_dir, 'confusion_matrix.png'), format='png')
+            os.path.join(save_dir, tag+'_'+'confusion_matrix.png'), format='png')
     if show:
         plt.show()
 
@@ -266,7 +273,8 @@ def main():
         dataset.CLASSES + ('background', ),
         save_dir=args.save_dir,
         show=args.show,
-        color_theme=args.color_theme)
+        color_theme=args.color_theme,
+        tag=args.tag)
 
 
 if __name__ == '__main__':

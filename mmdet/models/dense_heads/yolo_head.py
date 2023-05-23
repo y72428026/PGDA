@@ -77,7 +77,6 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
                      use_sigmoid=True,
                      loss_weight=1.0),
                  loss_wh=dict(type='MSELoss', loss_weight=1.0),
-                 focal=False,
                  train_cfg=None,
                  test_cfg=None,
                  init_cfg=dict(
@@ -93,8 +92,6 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
         self.featmap_strides = featmap_strides
         self.train_cfg = train_cfg
         self.test_cfg = test_cfg
-        self.focal = focal
-        # input(self.focal)
         if self.train_cfg:
             self.assigner = build_assigner(self.train_cfg.assigner)
             if hasattr(self.train_cfg, 'sampler'):
@@ -486,15 +483,17 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
         # input('ltarget')
         loss_cls = self.loss_cls(pred_label, target_label, weight=pos_mask)
 
-        if self.focal:
-            alpha = 0.25
-            pos_and_neg_mask_focal = torch.pow((1-torch.sigmoid(pred_conf)),2) * (1-alpha) * pos_mask.squeeze()
-            pos_and_neg_mask_focal += torch.pow(torch.sigmoid(pred_conf),2) * alpha * neg_mask
-            loss_conf = 10 * self.loss_conf(
-                pred_conf, target_conf, weight=pos_and_neg_mask_focal)
-        else:
-            loss_conf = self.loss_conf(
-                pred_conf, target_conf, weight=pos_and_neg_mask)
+        # if self.focal:
+        #     alpha = -1.25
+        #     pos_and_neg_mask_focal = torch.pow((0-torch.sigmoid(pred_conf)),2) * (1-alpha) * pos_mask.squeeze()
+        #     pos_and_neg_mask_focal += torch.pow(torch.sigmoid(pred_conf),1) * alpha * neg_mask
+        #     loss_conf = 9 * self.loss_conf(
+        #         pred_conf, target_conf, weight=pos_and_neg_mask_focal)
+        # else:
+        #     loss_conf = self.loss_conf(
+        #         pred_conf, target_conf, weight=pos_and_neg_mask)
+        loss_conf = self.loss_conf(
+            pred_conf, target_conf, weight=pos_and_neg_mask)
         loss_xy = self.loss_xy(pred_xy, target_xy, weight=pos_mask)
         loss_wh = self.loss_wh(pred_wh, target_wh, weight=pos_mask)
 

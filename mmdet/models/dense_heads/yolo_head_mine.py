@@ -25,11 +25,16 @@ class YOLOV3Head_mine(YOLOV3Head):
     def __init__(self,
                  num_classes,
                  in_channels,
-                 wscl=True,
+                 wscl=False,
+                #  focal=False,
                  in_channels_mine=[64,128],
                  **kwargs):
         self.in_channels_mine = in_channels_mine
         self.wscl = wscl
+        if kwargs['loss_cls']['type'] == 'FocalLoss':
+            self.focal = True
+        else:
+            self.focal = False
         super(YOLOV3Head_mine, self).__init__(num_classes, in_channels, **kwargs)
         self._init_layers_mine()
         # TODO just avgpool or avgpool then repeat
@@ -243,3 +248,74 @@ class YOLOV3Head_mine(YOLOV3Head):
 
         return target_maps_list
 
+    def loss_single(self, pred_map, target_map, neg_map):
+        """Compute loss of a single image from a batch.
+
+        Args:
+            pred_map (Tensor): Raw predictions for a single level.
+            target_map (Tensor): The Ground-Truth target for a single level.
+            neg_map (Tensor): The negative masks for a single level.
+
+        Returns:
+            tuple:
+                loss_cls (Tensor): Classification loss.
+                loss_conf (Tensor): Confidence loss.
+                loss_xy (Tensor): Regression loss of x, y coordinate.
+                loss_wh (Tensor): Regression loss of w, h coordinate.
+        """
+        # n,c,h,w -> n,h,w,c -> n,h*w*3, 5+classnum 
+        num_imgs = len(pred_map) # 
+        pred_map = pred_map.permute(0, 2, 3,
+                                    1).reshape(num_imgs, -1, self.num_attrib)
+        neg_mask = neg_map.float()
+        pos_mask = target_map[..., 4]
+        pos_and_neg_mask = neg_mask + pos_mask
+        pos_mask = pos_mask.unsqueeze(dim=-1)
+        if torch.max(pos_and_neg_mask) > 1.:
+            warnings.warn('There is overlap between pos and neg sample.')
+            pos_and_neg_mask = pos_and_neg_mask.clamp(min=0., max=1.)
+
+        pred_xy = pred_map[..., :2]
+        pred_wh = pred_map[..., 2:4]
+        pred_conf = pred_map[..., 4]
+        pred_label = pred_map[..., 5:]
+
+        target_xy = target_map[..., :2]
+        target_wh = target_map[..., 2:4]
+        target_conf = target_map[..., 4]
+        target_label = target_map[..., 5:]
+        # print('Focal' in type(self.loss_cls))
+        # input(type(self.loss_cls))
+        if self.focal:
+            # input('in focal')
+            pred_label = pred_label.reshape(-1, self.num_classes)
+            target_label = target_label.reshape(-1, self.num_classes)
+            target_label = torch.argmax(target_label, dim=-1)
+            pos_mask_reshape = pos_mask.reshape(-1)
+            loss_cls = self.loss_cls(pred_label, target_label, weight=pos_mask_reshape)
+        else:    
+            # input('not in focal')
+            loss_cls = self.loss_cls(pred_label, target_label, weight=pos_mask)
+        # print(pred_label.shape) # torch.Size([16, 969, 6])
+        # print(target_label.shape) torch.Size([16, 969, 6])
+        # print(pred_conf.shape) # torch.Size([16, 969])
+        # print(target_conf.shape) # torch.Size([16, 969])
+        # print(pos_and_neg_mask.shape) # torch.Size([16, 969])
+        # input('ltarget')        
+        
+        # old focal loss for loss_conf
+        # if self.focal:
+        #     alpha = -1.25
+        #     pos_and_neg_mask_focal = torch.pow((0-torch.sigmoid(pred_conf)),2) * (1-alpha) * pos_mask.squeeze()
+        #     pos_and_neg_mask_focal += torch.pow(torch.sigmoid(pred_conf),1) * alpha * neg_mask
+        #     loss_conf = 9 * self.loss_conf(
+        #         pred_conf, target_conf, weight=pos_and_neg_mask_focal)
+        # else:
+        #     loss_conf = self.loss_conf(
+        #         pred_conf, target_conf, weight=pos_and_neg_mask)
+        loss_conf = self.loss_conf(
+            pred_conf, target_conf, weight=pos_and_neg_mask)
+        loss_xy = self.loss_xy(pred_xy, target_xy, weight=pos_mask)
+        loss_wh = self.loss_wh(pred_wh, target_wh, weight=pos_mask)
+
+        return loss_cls, loss_conf, loss_xy, loss_wh

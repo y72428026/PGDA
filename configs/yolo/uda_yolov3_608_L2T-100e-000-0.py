@@ -6,13 +6,13 @@ samples_per_gpu=16
 evaluation = dict(interval=1, metric=['bbox'], start=10)
 log_config = dict(interval=30)
 find_unused_parameters=True
-
+load_from = '/home/yebh/checkpoint/yolov3_d53_mstrain-608_273e_coco_20210518_115020-a2c3acb8.pth'
 model = dict(
     type='YOLOV3',
     backbone=dict(
         type='Darknet',
         depth=53,
-        out_indices=(1, 2, 3, 4, 5),
+        out_indices=(3, 4, 5),
         init_cfg=dict(type='Pretrained', checkpoint='open-mmlab://darknet53')),
     neck=dict(
         type='YOLOV3Neck_mine',
@@ -195,7 +195,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[218, 246])
+    step=[80, 90])
 
-runner = dict(type='EpochBasedRunner', max_epochs=273)
+runner = dict(type='EpochBasedRunner', max_epochs=100)
 auto_scale_lr = dict(base_batch_size=64)

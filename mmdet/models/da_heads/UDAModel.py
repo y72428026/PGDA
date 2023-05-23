@@ -41,11 +41,13 @@ class UDAModel(SingleStageDetector):
                     enable_ease_loss=False,
                     ease_weight=0,
                     auxiliary_head_num=0, 
+                    num_classes=6,
                     cfa_v=9,
                     **cfg) -> None:
         super(SingleStageDetector, self).__init__()
         self.model = model_net
-        self.cfa_v=cfa_v
+        self.cfa_v = cfa_v
+        self.num_classes = num_classes
         self.da_head = build_head(da_head)
         self.da_ano_head = build_head(da_ano_head)
         self.da_pred_head = build_head(da_pred_head)
@@ -87,10 +89,10 @@ class UDAModel(SingleStageDetector):
         # input(da_head['in_channels'])
         for c in da_ano_head['in_channels']:
         # for c in da_head['in_channels']:
-            self.src_memory_bank.append(torch.zeros([6, c], dtype=torch.float, requires_grad=False).cuda())
-            self.src_weight.append(torch.zeros([6, 1], dtype=torch.float, requires_grad=False).cuda())
-            self.trg_memory_bank.append(torch.zeros([6, c], dtype=torch.float, requires_grad=False).cuda())
-            self.trg_weight.append(torch.zeros([6, 1], dtype=torch.float, requires_grad=False).cuda())
+            self.src_memory_bank.append(torch.zeros([self.num_classes, c], dtype=torch.float, requires_grad=False).cuda())
+            self.src_weight.append(torch.zeros([self.num_classes, 1], dtype=torch.float, requires_grad=False).cuda())
+            self.trg_memory_bank.append(torch.zeros([self.num_classes, c], dtype=torch.float, requires_grad=False).cuda())
+            self.trg_weight.append(torch.zeros([self.num_classes, 1], dtype=torch.float, requires_grad=False).cuda())
         self.local_iter = 0
         self.eps = torch.finfo(torch.float).eps
         self.linear_layer = torch.nn.Linear(1024, 512)
@@ -231,16 +233,19 @@ class UDAModel(SingleStageDetector):
         eps = torch.finfo(torch.float).eps
         for i in range(3):
             N, C, H, W = feat_maps[i].shape
+            # print(feat_maps[i].shape)
+            # print(pred_maps[i].shape)
+            # input('ck')
             feat_map_per_level = feat_maps[i].permute(0, 2, 3, 1) # (N, H, W, C)
             if sign == 'trg':
-                pred_map_per_level = pred_maps[i].permute(0, 2, 3, 1).reshape(N, H, W, 3, 11)
+                pred_map_per_level = pred_maps[i].permute(0, 2, 3, 1).reshape(N, H, W, 3, 5+self.num_classes)
                 pred_map_per_level_conf = (pred_map_per_level[...,4]).sigmoid() # (N, H, W, 3)
                 pred_map_per_level_conf, index = pred_map_per_level_conf.max(dim=-1) # (N, H, W)
                 # hyper parameter test
                 pred_map_per_level_conf = pred_map_per_level_conf.unsqueeze(-1) # (N, H, W, 1)
                 conf_mask = (pred_map_per_level_conf > self.conf_thres) # (N, H, W, 1)
-                index = index.unsqueeze(-1).unsqueeze(-1).repeat([1,1,1,1,6]) # (N, H, W, 1, 6)
                 pred_map_per_level_cls = pred_map_per_level[...,5:].sigmoid() # (N, H, W, 3, 6)
+                index = index.unsqueeze(-1).unsqueeze(-1).repeat([1,1,1,1,self.num_classes]) # (N, H, W, 1, 6)
                 # Get the probability prediction corresponding to the anchor most likely to find the object
                 pred_map_per_level_cls = torch.gather(pred_map_per_level_cls, -2, index).squeeze_(-2) # (N, H, W, 6)
                 # hyper parameter test
@@ -270,14 +275,14 @@ class UDAModel(SingleStageDetector):
                     pred_map_per_level_conf = pred_map_per_level_conf * weight[2] + (1 - weight[2])*torch.ones_like(pred_map_per_level_conf)              
                     pred_map_per_level_cls = conf_mask * pred_map_per_level_conf * pred_map_mask * pred_map_per_level_cls  # (N, H, W, 6)
             else:
-                pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, 11)
+                pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, -1)
                 conf_mask = pred_map_per_level[...,4].sum(dim=-1).unsqueeze(-1).clamp(-1,1)
                 pred_map_mask = pred_map_per_level[...,5:].sum(dim=-2).clamp(-1,1)
                 pred_map_per_level_cls = conf_mask * pred_map_mask
 
             anchor = []
-            weight = torch.zeros([6,1], device=pred_map_per_level_cls.device, dtype=torch.float)
-            for j in range(6):
+            weight = torch.zeros([self.num_classes,1], device=pred_map_per_level_cls.device, dtype=torch.float)
+            for j in range(self.num_classes):
                 pred_j = pred_map_per_level_cls[...,j] # (N, H, W)
                 anchor.append((feat_map_per_level * pred_j.unsqueeze(-1)).sum(dim=[0,1,2]) / (
                     pred_j.sum() + eps ) )
@@ -305,7 +310,7 @@ class UDAModel(SingleStageDetector):
             N, C, H, W = feat_maps[i].shape
             feat_map_per_level = feat_maps[i].permute(0, 2, 3, 1) # (N, H, W, C)
             if sign == 'trg':
-                pred_map_per_level = pred_maps[i].permute(0, 2, 3, 1).reshape(N, H, W, 3, 11)
+                pred_map_per_level = pred_maps[i].permute(0, 2, 3, 1).reshape(N, H, W, 3, -1)
                 pred_map_per_level_conf = (pred_map_per_level[...,4]).sigmoid() # (N, H, W, 3)
                 # pred_map_per_level_conf, index = pred_map_per_level_conf.max(dim=-1) # (N, H, W)
                 # hyper parameter test
@@ -319,7 +324,7 @@ class UDAModel(SingleStageDetector):
                 # if conf < 0.5 and cls < 0.5, then cls is not dependable
                 pred_map_per_level_cls = conf_mask * pred_map_mask * pred_map_per_level_cls # (N, H, W, 3, 6)
             else:
-                pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, 11) 
+                pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, -1) 
                 conf_mask = pred_map_per_level[...,4].unsqueeze(-1) # (N, H, W, 3, 1)
                 assert conf_mask.max() <=1
                 pred_map_mask = pred_map_per_level[...,5:] # (N, H, W, 3, 6)
@@ -327,8 +332,8 @@ class UDAModel(SingleStageDetector):
                 pred_map_per_level_cls = conf_mask * pred_map_mask # (N, H, W, 3, 6)
 
             anchor = []
-            weight = torch.zeros([6,1], device=pred_map_per_level_cls.device, dtype=torch.float)
-            for j in range(6):
+            weight = torch.zeros([self.num_classes,1], device=pred_map_per_level_cls.device, dtype=torch.float)
+            for j in range(self.num_classes):
                 pred_j = pred_map_per_level_cls[...,j] # (N, H, W, 3)
                 anchor.append((feat_map_per_level.unsqueeze(-2) * pred_j.unsqueeze(-1)).sum(dim=[0,1,2,3]) / (
                     pred_j.sum() + eps ) )
@@ -348,12 +353,12 @@ class UDAModel(SingleStageDetector):
         # weight.shape: [6, 1]
         alpha = self.alpha_mb 
         if sign == 'src':
-            for i in range(6):
+            for i in range(self.num_classes):
                 if weight[i] > 0:
                     self.src_memory_bank[layer_lvl][i] = self.src_memory_bank[layer_lvl][i]*(1-alpha*weight[i]) + alpha*weight[i]*anchor[i] # [6, C]
                     self.src_weight[layer_lvl][i] = self.src_weight[layer_lvl][i]*(1-alpha*weight[i]) + alpha*weight[i]*weight[i]
         if sign == 'trg':
-            for i in range(6):
+            for i in range(self.num_classes):
                 if weight[i] > 0:
                     self.trg_memory_bank[layer_lvl][i] = self.trg_memory_bank[layer_lvl][i]*(1-alpha*weight[i]) + alpha*weight[i]*anchor[i] # [6, C]
                     self.trg_weight[layer_lvl][i] = self.trg_weight[layer_lvl][i]*(1-alpha*weight[i]) + alpha*weight[i]*weight[i]
@@ -381,7 +386,7 @@ class UDAModel(SingleStageDetector):
         # sim_matrix_ts = torch.zeros([6,6], dtype=torch.float, device=src_anchor.device)
         # sim_matrix_tt = torch.zeros([6,6], dtype=torch.float, device=src_anchor.device)
         if self.local_iter % 154 == 1:
-            sim_matrix_st_memory = torch.zeros([6,6], dtype=torch.float, device=src_anchor.device)
+            sim_matrix_st_memory = torch.zeros([K,K], dtype=torch.float, device=src_anchor.device)
             for i in range(K):
                 for j in range(K):
                     # sim_matrix_st[i,j] = self.similarity(src_anchor[i], self.trg_memory_bank[layer_lvl][j])

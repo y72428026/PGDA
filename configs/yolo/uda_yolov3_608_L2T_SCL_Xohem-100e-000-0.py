@@ -12,7 +12,7 @@ model = dict(
     backbone=dict(
         type='Darknet',
         depth=53,
-        out_indices=(1, 2, 3, 4, 5),
+        out_indices=(1, 2, 3, 4, 5), # for scl
         init_cfg=dict(type='Pretrained', checkpoint='open-mmlab://darknet53')),
     neck=dict(
         type='YOLOV3Neck_mine',

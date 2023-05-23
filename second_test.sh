@@ -1,5 +1,4 @@
 work_dir=/home/yebh/work_dirs_remote/test_dataset/L2T_SCL_608/ablation-a-T05/uda_yolov3_L2T_SCL_1h1h0-00875-T05-a05-gpu7-v0-247-247-246
-# config_name="uda_yolov3_T2L_SCL-75k75k0-00625_test_source_dataset.py"
 config_name=uda_yolov3_L2T_SCL_1h1h0-00875-T05-a05.py
 epoch=235
   

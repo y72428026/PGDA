@@ -7,6 +7,9 @@ def multi_test(work_fdir, gpu=0):
         is_json = False
         is_pth = False
         is_finish = False
+        max_epoch = 0
+        is_100 = False
+        is_273 = False
         for file in files:
             if file.endswith('.py'):
                 is_py = True
@@ -16,10 +19,18 @@ def multi_test(work_fdir, gpu=0):
                 is_json = True
             if file.endswith('.pth'):
                 is_pth = True
-                if file ==  'epoch_273.pth' and 'T2L_SCL' in root:
-                    is_finish = True
-                if file ==  'epoch_100.pth' and 'L2T_SCL' in root:
-                    is_finish = True
+                if file.startswith('epoch_'):
+                    epoch = int(file.split('_')[1].split('.')[0])
+                    if epoch > max_epoch:
+                        max_epoch = epoch
+                if file ==  'epoch_273.pth':
+                    is_273 = True
+                if file ==  'epoch_100.pth':
+                    is_100 = True
+        if is_273 and max_epoch == 273:
+            is_finish = True
+        elif is_100 and max_epoch == 100:
+            is_finish = True
         if is_py and is_txt and is_json and is_pth and is_finish:
             work_dir = root
             # find config file
@@ -58,8 +69,5 @@ def multi_test(work_fdir, gpu=0):
 # work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/T2L_SCL'
 # work_fdir = '/home/yebh/work_dirs_remote/test_dataset/L2T_SCL_608'
 # multi_test(work_fdir, gpu=7)
-# work_fdir = '/home/yebh/work_dirs_remote/test_dataset/T2L_SCL_608'
-work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/L2T_SCL'
-work_fdir = '/home/yebh/work_dirs_remote/DAOD/T2L_SCL'
-# work_fdir = '/home/yebh/mmdetection/work_dirs/test_dataset/T2L_SCL/CFA_608/uda-yolov3-T2L-SCL-75k75k0-cfav9-0.075-cT0.3-pT0.7-a0.1-gpu2-v1'
+work_fdir = '/home/yebh/mmdet2/work_dirs'
 multi_test(work_fdir, gpu=6)

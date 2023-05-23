@@ -1,7 +1,7 @@
 # Copyright (c) OpenMMLab. All rights reserved.
 import argparse
 import copy
-import os
+import os, sys
 import os.path as osp
 import time
 import warnings
@@ -32,6 +32,10 @@ def parse_args():
         '--auto-resume',
         action='store_true',
         help='resume from the latest checkpoint automatically')
+    parser.add_argument(
+        '--testcfg',
+        action='store_true',
+        help='test if all test config files are valid')
     parser.add_argument(
         '--no-validate',
         action='store_true',
@@ -109,6 +113,9 @@ def main():
     args = parse_args()
     torch.cuda.set_device(args.gpu_id)
     cfg = Config.fromfile(args.config)
+    if args.testcfg:
+        input(f'{args.config} is valid')
+        return('ok')
 
     # replace the ${key} with the value of cfg.key
     cfg = replace_cfg_vals(cfg)
@@ -187,7 +194,10 @@ def main():
                 shutil.rmtree(args.work_dir+'/da_heads_backup')
             else:
                 shutil.rmtree(args.work_dir)
-        shutil.copytree('../mmdet/models/da_heads/', args.work_dir+'/da_heads_backup')
+
+        # print(os.getcwd()) # /home/yebh/mmdet2/sh_baseline
+        root_path = sys.path[0][:sys.path[0].find('tools')] # /home/yebh/mmdet2/tools
+        shutil.copytree(osp.join(root_path,'mmdet/models/da_heads/'), args.work_dir+'/da_heads_backup')
 
     # create work_dir
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))

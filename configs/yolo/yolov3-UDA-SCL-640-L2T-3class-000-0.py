@@ -3,10 +3,18 @@ _base_ = [  './yolov3_d53_mstrain-608_273e_coco.py', ]
 # fp16 = dict(loss_scale='dynamic')
 # samples_per_gpu=32
 samples_per_gpu=16
-evaluation = dict(interval=1, metric=['bbox'], start=10)
+evaluation = dict(interval=1, metric=['bbox'])
+# evaluation = dict(interval=1, metric=['bbox'], start=10)
 log_config = dict(interval=30)
 find_unused_parameters=True
 
+import os
+trainpath = os.getcwd()
+root_dir = trainpath[:trainpath.find('yebh')]+'yebh/'
+# load_from = root_dir + '/checkpoint/yolov3_d53_mstrain-608_273e_coco_20210518_115020-a2c3acb8.pth'
+# load_from='/home/yebh/mmdet2/work_dirs/baseline/yolov3-640-L-3class-000-0-4gpu-dist/epoch_211.pth'
+load_from='/home/yebh/mmdet2/work_dirs/baseline/yolov3-SCL-640-L-3class-000-0-4gpu-dist/epoch_251_new.pth'
+num_classes=3
 model = dict(
     type='YOLOV3',
     backbone=dict(
@@ -21,7 +29,7 @@ model = dict(
         out_channels=[512, 256, 128]),
     bbox_head=dict(
         type='YOLOV3Head_mine',
-        num_classes=6,
+        num_classes=num_classes,
         wscl=True,
         in_channels=[512, 256, 128],
         out_channels=[1024, 512, 256],
@@ -36,7 +44,7 @@ model = dict(
             strides=[32, 16, 8]),
         bbox_coder=dict(type='YOLOBBoxCoder'),
         featmap_strides=[32, 16, 8],
-        focal=True,
+        # focal=True,
         loss_cls=dict(
             type='CrossEntropyLoss',
             use_sigmoid=True,
@@ -106,6 +114,7 @@ uda=dict(
     enable_ease_loss=False,
     ease_weight=1e-5,
     auxiliary_head_num=0,
+    num_classes=num_classes,
     )
 img_norm_cfg = dict(mean=[0, 0, 0], std=[255., 255., 255.], to_rgb=True)
 train_pipeline = [
@@ -143,47 +152,45 @@ test_pipeline = [
             dict(type='Collect', keys=['img'])
         ])
 ]
-dataset_type = 'CocoDataset_mine'
-dataset_dir = '/home/yebh/'
-classes = (
-    'triangle offset' ,
-    'leftover material',
-    'left and right side material',
-    'open on both sides',
-    'big hole opening',
-    'white border')
 
+dataset_type = 'CocoDataset'
+classes = (
+    'remnant',
+    'broken',
+    'white border')
+tag = '3class'
 data = dict(
     samples_per_gpu=samples_per_gpu,
-    workers_per_gpu=4,
+    workers_per_gpu=16,
     train=dict( 
         _delete_=True,
         type='UDADataset',
         source=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=dataset_dir+'dataset/BIS/BIS_HP_13_16/JPEGImages',
-            ann_file=dataset_dir+'dataset/BIS/BIS_HP_13_16/HP_13_16_all.json',
+            img_prefix=root_dir+f'dataset/BIS/BIS_HP_13_16_{tag}/JPEGImages',
+            ann_file=root_dir+f'dataset/BIS/BIS_HP_13_16_{tag}/HP_13_16_all_{tag}.json',
             pipeline=train_pipeline),
         target=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=dataset_dir+'dataset/BIS/BIS_HP_transparent/JPEGImages',
-            ann_file=dataset_dir+'dataset/BIS/BIS_HP_transparent/HP_transparent_trainval.json',
+            img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
+            ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_trainval_{tag}.json',
             pipeline=train_pipeline),
         ),
     val=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=dataset_dir+'dataset/BIS/BIS_HP_transparent/JPEGImages',
-        ann_file=dataset_dir+'dataset/BIS/BIS_HP_transparent/HP_transparent_test.json',
+        img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
+        ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_test_{tag}.json',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=dataset_dir+'dataset/BIS/BIS_HP_transparent/JPEGImages',
-        ann_file=dataset_dir+'dataset/BIS/BIS_HP_transparent/HP_transparent_test.json',
+        img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
+        ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_test_{tag}.json',
         pipeline=test_pipeline))
+
 
 cudnn_benchmark = True
 
