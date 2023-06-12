@@ -146,7 +146,7 @@ class NumClassCheckHook(Hook):
                          f'{module.__class__.__name__} of '
                          f'{model.__class__.__name__} does not matches '
                          f'the length of `CLASSES` '
-                         f'{len(dataset.CLASSES)}) in '
+                         f'({len(dataset.CLASSES)}) in '
                          f'{dataset.__class__.__name__}')
 
     def before_train_epoch(self, runner):

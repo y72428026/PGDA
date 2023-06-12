@@ -41,7 +41,6 @@ def parse_args():
         '--input-shape',
         type=int,
         nargs='+',
-        # default=[608, 608],
         default=[640, 480],
         help='input image size')
     parser.add_argument(
@@ -333,6 +332,7 @@ def main():
     update_data_root(cfg)
 
     input_shape = args.input_shape
+    input(input_shape)
     assert len(input_shape) == 2
 
     anchor_type = cfg.model.bbox_head.anchor_generator.type

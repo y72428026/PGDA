@@ -2,35 +2,29 @@ _base_ = [  './yolov3_d53_mstrain-608_273e_coco.py', ]
 
 # fp16 = dict(loss_scale='dynamic')
 # samples_per_gpu=32
-samples_per_gpu=16
+samples_per_gpu=8
+workers_per_gpu=4
 evaluation = dict(interval=1, metric=['bbox'])
-# evaluation = dict(interval=1, metric=['bbox'], start=10)
 log_config = dict(interval=30)
 find_unused_parameters=True
+
+image_scale=(640,640)
+dataset_type='PCB'
+mode = 'uda_640'
+num_classes=6
+source_dataset = 'PCBCropGray'
+target_dataset = 'DeepPCB'
+classes = ('open', 'short', 'mousebite', 'spur', 'copper', 'pin-hole')
 
 import os
 trainpath = os.getcwd()
 root_dir = trainpath[:trainpath.find('yebh')]+'yebh/'
-# load_from = root_dir + '/checkpoint/yolov3_d53_mstrain-608_273e_coco_20210518_115020-a2c3acb8.pth'
-# load_from='/home/yebh/mmdet2/work_dirs/baseline/yolov3-640-L-3class-000-0-4gpu-dist/epoch_211.pth'
-load_from='/home/yebh/mmdet2/work_dirs/baseline/yolov3-SCL-640-L-3class-000-0-4gpu-dist/epoch_251_new.pth'
-num_classes=3
+load_from = root_dir + f'/checkpoint/{source_dataset}/best_addmodel.pth'
 model = dict(
     type='YOLOV3',
-    backbone=dict(
-        type='Darknet',
-        depth=53,
-        out_indices=(1, 2, 3, 4, 5),
-        init_cfg=dict(type='Pretrained', checkpoint='open-mmlab://darknet53')),
-    neck=dict(
-        type='YOLOV3Neck_mine',
-        num_scales=3,
-        in_channels=[1024, 512, 256],
-        out_channels=[512, 256, 128]),
     bbox_head=dict(
         type='YOLOV3Head_mine',
         num_classes=num_classes,
-        wscl=True,
         in_channels=[512, 256, 128],
         out_channels=[1024, 512, 256],
         anchor_generator=dict(
@@ -44,7 +38,6 @@ model = dict(
             strides=[32, 16, 8]),
         bbox_coder=dict(type='YOLOBBoxCoder'),
         featmap_strides=[32, 16, 8],
-        # focal=True,
         loss_cls=dict(
             type='CrossEntropyLoss',
             use_sigmoid=True,
@@ -68,12 +61,6 @@ model = dict(
             pos_iou_thr=0.5,
             neg_iou_thr=0.5,
             min_pos_iou=0)),
-        # sampler=dict(
-        #     type='OHEMSampler',
-        #     num=512,
-        #     pos_fraction=0.25,
-        #     neg_pos_ub=-1,
-        #     add_gt_as_proposals=True)),
     test_cfg=dict(
         nms_pre=1000,
         min_bbox_size=0,
@@ -129,7 +116,7 @@ train_pipeline = [
         type='MinIoURandomCrop',
         min_ious=(0.4, 0.5, 0.6, 0.7, 0.8, 0.9),
         min_crop_size=0.3),
-    dict(type='Resize', img_scale=[(320, 320), (608, 608)], keep_ratio=True),
+    dict(type='Resize', img_scale=[(320, 320), image_scale], keep_ratio=True),
     dict(type='RandomFlip', flip_ratio=0.5),
     dict(type='PhotoMetricDistortion'),
     dict(type='Normalize', **img_norm_cfg),
@@ -141,7 +128,7 @@ test_pipeline = [
     dict(type='LoadImageFromFile'),
     dict(
         type='MultiScaleFlipAug',
-        img_scale=(608, 608),
+        img_scale=image_scale,
         flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
@@ -154,41 +141,38 @@ test_pipeline = [
 ]
 
 dataset_type = 'CocoDataset'
-classes = (
-    'remnant',
-    'broken',
-    'white border')
-tag = '3class'
+
+
 data = dict(
     samples_per_gpu=samples_per_gpu,
-    workers_per_gpu=16,
+    workers_per_gpu=workers_per_gpu,
     train=dict( 
         _delete_=True,
         type='UDADataset',
         source=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=root_dir+f'dataset/BIS/BIS_HP_13_16_{tag}/JPEGImages',
-            ann_file=root_dir+f'dataset/BIS/BIS_HP_13_16_{tag}/HP_13_16_all_{tag}.json',
+            img_prefix=root_dir+f'dataset/{source_dataset}/JPEGImages',
+            ann_file=root_dir+f'dataset/{source_dataset}/{source_dataset}_all.json',
             pipeline=train_pipeline),
         target=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
-            ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_trainval_{tag}.json',
+            img_prefix=root_dir+f'dataset/{target_dataset}/JPEGImages',
+            ann_file=root_dir+f'dataset/{target_dataset}/{target_dataset}_trainval.json',
             pipeline=train_pipeline),
         ),
     val=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
-        ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_test_{tag}.json',
+        img_prefix=root_dir+f'dataset/{target_dataset}/JPEGImages',
+        ann_file=root_dir+f'dataset/{target_dataset}/{target_dataset}_test.json',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/JPEGImages',
-        ann_file=root_dir+f'dataset/BIS/BIS_HP_transparent_{tag}/HP_transparent_test_{tag}.json',
+        img_prefix=root_dir+f'dataset/{target_dataset}/JPEGImages',
+        ann_file=root_dir+f'dataset/{target_dataset}/{target_dataset}_test.json',
         pipeline=test_pipeline))
 
 

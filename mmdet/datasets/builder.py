@@ -10,7 +10,7 @@ import torch
 from mmcv.parallel import collate
 from mmcv.runner import get_dist_info
 from mmcv.utils import TORCH_VERSION, Registry, build_from_cfg, digit_version
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader as DataLoader_ori
 
 from .samplers import (ClassAwareSampler, DistributedGroupSampler,
                        DistributedSampler, GroupSampler, InfiniteBatchSampler,
@@ -28,6 +28,10 @@ if platform.system() != 'Windows':
 DATASETS = Registry('dataset')
 PIPELINES = Registry('pipeline')
 
+from prefetch_generator import BackgroundGenerator
+class DataLoader(DataLoader_ori):
+    def __iter__(self):
+        return BackgroundGenerator(super().__iter__())
 
 def _concat_dataset(cfg, default_args=None):
     from .dataset_wrappers import ConcatDataset
@@ -193,7 +197,7 @@ def build_dataloader(dataset,
     elif persistent_workers is True:
         warnings.warn('persistent_workers is invalid because your pytorch '
                       'version is lower than 1.7.0')
-
+    # input(kwargs)
     data_loader = DataLoader(
         dataset,
         batch_size=batch_size,
