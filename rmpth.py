@@ -1,8 +1,9 @@
 # walk the path, if the number of pth in the dir is more than 15, execute the following code
 import os, shutil, time
 
-
-scan_path = '/home/yebh/mmdet2/work_dirs'
+path = os.getcwd()
+scan_path = os.path.join(path, 'work_dirs')
+print(f'scan path: {scan_path}')
 while 1:
     # print time
     print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

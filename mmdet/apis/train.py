@@ -139,13 +139,17 @@ def train_detector(model,
         dist=distributed,
         seed=cfg.seed,
         runner_type=runner_type,
-        persistent_workers=False)
+        # persistent_workers=False,
+        persistent_workers=True,
+        pin_memory=True,
+        prefetch_factor=16
+        )
 
     train_loader_cfg = {
         **train_dataloader_default_args,
         **cfg.data.get('train_dataloader', {})
     }
-
+    # input(train_loader_cfg)
     data_loaders = [build_dataloader(ds, **train_loader_cfg) for ds in dataset]
 
     # put model on gpus
@@ -207,7 +211,10 @@ def train_detector(model,
             workers_per_gpu=2,
             dist=distributed,
             shuffle=False,
-            persistent_workers=False)
+            # persistent_workers=False,
+            persistent_workers=True,
+            pin_memory=True,
+            prefetch_factor=16)
 
         val_dataloader_args = {
             **val_dataloader_default_args,

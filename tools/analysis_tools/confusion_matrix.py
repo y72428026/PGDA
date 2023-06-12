@@ -82,6 +82,7 @@ def calculate_confusion_matrix(dataset,
     """
     num_classes = len(dataset.CLASSES)
     confusion_matrix = np.zeros(shape=[num_classes + 1, num_classes + 1])
+    print(len(dataset), len(results))
     assert len(dataset) == len(results)
     prog_bar = mmcv.ProgressBar(len(results))
     for idx, per_img_res in enumerate(results):

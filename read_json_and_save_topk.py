@@ -82,7 +82,7 @@ def multi_test(work_dir, gpu=0):
                 if not os.path.exists(log_dir):
                     if os.path.exists(old_log_dir):
                         os.remove(old_log_dir)
-                    os.system(f'CUDA_VISIBLE_DEVICES={gpu} python tools/test.py \
+                    os.system(f'CUDA_VISIBLE_DEVICES={gpu} python {root_path}/tools/test.py \
                         {config_dir} \
                         {model_dir} \
                         --eval bbox \
