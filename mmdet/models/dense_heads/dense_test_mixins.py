@@ -81,17 +81,11 @@ class BBoxTestMixin(object):
                 cfg=self.test_cfg,
                 rescale=False,
                 with_nms=False)[0]
-            ### fix bug
-            # aug_bboxes.append(bbox_outputs[0])
-            # aug_scores.append(bbox_outputs[1])
-            # if len(bbox_outputs) >= 3:
-            #     aug_labels.append(bbox_outputs[2])
-            N = bbox_outputs[0].shape[0]
-            aug_bboxes.append(bbox_outputs[0][:,:4])
-            aug_scores.append(bbox_outputs[0][:,4:].reshape([N,]))
-            if len(bbox_outputs) >= 2:
-                aug_labels.append(bbox_outputs[1].reshape([N,]))
-                
+            aug_bboxes.append(bbox_outputs[0])
+            aug_scores.append(bbox_outputs[1])
+            if len(bbox_outputs) >= 3:
+                aug_labels.append(bbox_outputs[2])
+
         # after merging, bboxes will be rescaled to the original image size
         merged_bboxes, merged_scores = self.merge_aug_bboxes(
             aug_bboxes, aug_scores, img_metas)

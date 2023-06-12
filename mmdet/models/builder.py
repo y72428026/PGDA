@@ -80,7 +80,7 @@ def build_detector_mine(cfg, train_cfg=None, test_cfg=None):
         model_net = build_detector_mine(model, train_cfg=train_cfg, test_cfg=test_cfg)
         cfg.uda['model'] = model
         cfg.uda['max_epochs'] = cfg.runner.max_epochs 
-        cfg.uda['work_dir'] = cfg.get('work_dir','')
+        cfg.uda['work_dir'] = cfg.work_dir
         if cfg.uda.type == "UDAModel":
             return UDAModel(model_net, **cfg.uda)
         elif cfg.uda.type == "UDAModel_SCL":

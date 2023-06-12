@@ -66,14 +66,8 @@ def bbox_mapping_back(bboxes,
                       flip,
                       flip_direction='horizontal'):
     """Map bboxes from testing scale to original image scale."""
-    # bboxes = bboxes[:, :4]
     new_bboxes = bbox_flip(bboxes, img_shape,
                            flip_direction) if flip else bboxes
-    if new_bboxes.shape[-1] == 5:
-        new_bboxes = new_bboxes.view(-1, 4) / new_bboxes.new_tensor(scale_factor)
-        print(new_bboxes.shape)
-        input('scale_factor')
-        return new_bboxes
     new_bboxes = new_bboxes.view(-1, 4) / new_bboxes.new_tensor(scale_factor)
     return new_bboxes.view(bboxes.shape)
 

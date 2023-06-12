@@ -20,12 +20,7 @@ from mmdet.models import build_detector, build_detector_mine
 from mmdet.utils import (collect_env, get_device, get_root_logger,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
-import shutil, cv2
-# import os
-os.environ["OMP_NUM_THREADS"] = "1" 
-os.environ["MKL_NUM_THREADS"] = "1" 
-cv2.setNumThreads(0)
-cv2.ocl.setUseOpenCL(False)
+import shutil
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')

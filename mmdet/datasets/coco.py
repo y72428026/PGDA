@@ -249,14 +249,7 @@ class CocoDataset(CustomDataset):
                     data['image_id'] = img_id
                     data['bbox'] = self.xyxy2xywh(bboxes[i])
                     data['score'] = float(bboxes[i][4])
-                    try:
-                        data['category_id'] = self.cat_ids[label]
-                    except:
-                        print(f"error: {label}")
-                        print(self.cat_ids)
-                        print(self.CLASSES)
-                        print(len( result))
-                        sys.exit()
+                    data['category_id'] = self.cat_ids[label]
                     json_results.append(data)
         return json_results
 
