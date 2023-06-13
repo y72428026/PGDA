@@ -21,12 +21,12 @@ from mmdet.utils import (collect_env, get_device, get_root_logger,
                          replace_cfg_vals, setup_multi_processes,
                          update_data_root)
 import shutil, cv2
-# import os
+import os, random
 os.environ["OMP_NUM_THREADS"] = "1" 
 os.environ["MKL_NUM_THREADS"] = "1" 
 cv2.setNumThreads(0)
 cv2.ocl.setUseOpenCL(False)
-
+# torch.set_num_threads(80)
 def parse_args():
     parser = argparse.ArgumentParser(description='Train a detector')
     parser.add_argument('config', help='train config file path')
@@ -265,6 +265,7 @@ def main():
             CLASSES=datasets[0].CLASSES)
     # add an attribute for visualization convenience
     model.CLASSES = datasets[0].CLASSES
+
     train_detector(
         model,
         datasets,
@@ -276,4 +277,12 @@ def main():
 
 
 if __name__ == '__main__':
+    pid = os.getpid()
+    # get a random number from 1 to 40
+    import datetime
+    nowtime = datetime.datetime.now()
+    pidR = (nowtime.hour + nowtime.minute + nowtime.second)%40
+    # use shell to run taskset
+    os.system(f"taskset -pc {pidR},{pidR+40} {pid}")
+    # input(f'pid: {pid}, pidR: {pidR}, pidR+40: {pidR+40}')
     main()

@@ -9,7 +9,7 @@ log_config = dict(interval=15)
 find_unused_parameters=True
 
 image_scale=(640,640)
-dataset_tag = 'HP3class'
+dataset_tag = 'HP3class0'
 source_dataset = 'HPT'
 target_dataset = 'HPL'
 classes = (

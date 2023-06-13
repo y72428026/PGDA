@@ -32,9 +32,10 @@ def _params_equal(ema_model, model):
 # @DETECTORS.register_module()
 class UDAModel(SingleStageDetector):
     def __init__(self, model_net, 
-                    da_head=None, 
-                    da_ano_head=None, 
+                    da_backbone_head=None, 
+                    da_neck_head=None, 
                     da_pred_head=None, 
+                    da_output_head=None, 
                     enable_category_loss=False,
                     category_weight=0,
                     alpha_mb=1,
@@ -48,54 +49,49 @@ class UDAModel(SingleStageDetector):
         self.model = model_net
         self.cfa_v = cfa_v
         self.num_classes = num_classes
-        self.da_head = build_head(da_head)
-        self.da_ano_head = build_head(da_ano_head)
+        self.da_backbone_head = build_head(da_backbone_head)
+        self.da_neck_head = build_head(da_neck_head)
         self.da_pred_head = build_head(da_pred_head)
-        # aux loss
-        self.auxiliary_head_num = auxiliary_head_num
-        if auxiliary_head_num >0 :
-            self.auxiliary_head = torch.nn.ModuleList()
-            self.loc_weight = 1
-            self.cls_weight = 1
-            for _ in range(self.auxiliary_head_num):
-                self.auxiliary_head.append(build_head(cfg['model']['bbox_head']))
+        self.da_output_head = build_head(da_output_head)
+        # # aux loss
+        # self.auxiliary_head_num = auxiliary_head_num
+        # if auxiliary_head_num >0 :
+        #     self.auxiliary_head = torch.nn.ModuleList()
+        #     self.loc_weight = 1
+        #     self.cls_weight = 1
+        #     for _ in range(self.auxiliary_head_num):
+        #         self.auxiliary_head.append(build_head(cfg['model']['bbox_head']))
         self.train_cfg = cfg['model']['train_cfg']
         self.test_cfg = cfg['model']['test_cfg']
         self.conf_thres = cfg.get('cfa_conf_thres')
         self.pred_thres = cfg.get('cfa_pred_thres')
         self.grl_img = GradientScalarLayer(-1.0)
         self.loss_keys = None
-        # lossW 
-        if self.cfa_v == 16:
-            self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(1.0, dtype=torch.float)), # conf_mask
-                                             nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_mask
-                                             nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_per_level_conf
-                                             ])
-        else:
-            self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(0.0, dtype=torch.float)) for _ in range(3)])
+        # # lossW 
+        # if self.cfa_v == 16:
+        #     self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(1.0, dtype=torch.float)), # conf_mask
+        #                                      nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_mask
+        #                                      nn.Parameter(torch.tensor(0.0, dtype=torch.float)), # pred_map_per_level_conf
+        #                                      ])
+        # else:
+        #     self.loss_weight = nn.ParameterList([nn.Parameter(torch.tensor(0.0, dtype=torch.float)) for _ in range(3)])
         # category loss
         self.enable_category_loss = enable_category_loss
         self.category_weight = category_weight 
         self.alpha_mb = alpha_mb
-        # input(alpha_mb)
-        self.enable_ease_loss = enable_ease_loss
-        self.ease_weight = ease_weight
-        self.enable_scl = True
         self.src_memory_bank = list()
         self.trg_memory_bank = list()
         self.src_weight = list()
         self.trg_weight = list()
-        # input(da_ano_head['in_channels'])
-        # input(da_head['in_channels'])
-        for c in da_ano_head['in_channels']:
-        # for c in da_head['in_channels']:
+        # for c in da_neck_head['in_channels']:
+        for c in da_pred_head['in_channels']:
             self.src_memory_bank.append(torch.zeros([self.num_classes, c], dtype=torch.float, requires_grad=False).cuda())
             self.src_weight.append(torch.zeros([self.num_classes, 1], dtype=torch.float, requires_grad=False).cuda())
             self.trg_memory_bank.append(torch.zeros([self.num_classes, c], dtype=torch.float, requires_grad=False).cuda())
             self.trg_weight.append(torch.zeros([self.num_classes, 1], dtype=torch.float, requires_grad=False).cuda())
         self.local_iter = 0
         self.eps = torch.finfo(torch.float).eps
-        self.linear_layer = torch.nn.Linear(1024, 512)
+        # self.linear_layer = torch.nn.Linear(1024, 512)
 
     def get_model(self):
         return get_module(self.model)
@@ -110,8 +106,8 @@ class UDAModel(SingleStageDetector):
         return self.get_model().encode_decode(img, img_metas, **kwargs)
 
     def forward_train(self,
-                      img,
-                      img_metas,
+                      source_img,
+                      source_img_metas,
                       gt_bboxes,
                       gt_labels,
                       target_img=None,
@@ -124,76 +120,77 @@ class UDAModel(SingleStageDetector):
         '''
         # [   torch.Size([8, 512, 19, 18]), 
         #     torch.Size([8, 256, 38, 36]), 
-        #     torch.Size([8, 128, 76, 72])]
+        #     torch.Size([8, 128, 76, 72]) ]
         '''
         # trg
-        feat = model.extract_feat(target_img)
-        trg_da_loss = add_prefix(self.da_head(feat[-3:], is_source=False),'trg')
-        losses.update(trg_da_loss)
-        feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
-        trg_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=False), 'trg_ano')
-        # trg_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=False), 'trg_pred')
-        losses.update(trg_da_ano_loss)
-        # losses.update(trg_da_pred_loss)
-        # aux cls loc loss
-        if self.auxiliary_head_num != 0:
-            feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
-            losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=False), 'trg'))
+        feat_bb, feat_neck = model.extract_feat_mine(target_img)
+        feat_pred, pred_maps = model.bbox_head.return_feat_pred(feat_neck)
+        # print([ele.shape for ele in feat_bb])
+        # print([ele.shape for ele in feat_neck])
+        # print([ele.shape for ele in feat_pred])
+        # print([ele.shape for ele in pred_maps])
+        # input('cl')
+        # [torch.Size([8, 256, 64, 80]), torch.Size([8, 512, 32, 40]), torch.Size([8, 1024, 16, 20])]
+        # [torch.Size([8, 512, 16, 20]), torch.Size([8, 256, 32, 40]), torch.Size([8, 128, 64, 80])]
+        # [torch.Size([8, 1024, 16, 20]), torch.Size([8, 512, 32, 40]), torch.Size([8, 256, 64, 80])]
+        # [torch.Size([8, 24, 16, 20]), torch.Size([8, 24, 32, 40]), torch.Size([8, 24, 64, 80])]
+        if self.da_backbone_head != None:
+            trg_da_bb_loss = add_prefix(self.da_backbone_head(feat_bb, is_source=False), 'trg_bb')
+            losses.update(trg_da_bb_loss)
+        if self.da_neck_head != None:
+            trg_da_neck_loss = add_prefix(self.da_neck_head(feat_neck, is_source=False), 'trg_neck')
+            losses.update(trg_da_neck_loss)
+        if self.da_pred_head != None:
+            trg_da_pred_loss = add_prefix(self.da_pred_head(feat_pred, is_source=False), 'trg_pred')
+            losses.update(trg_da_pred_loss)
+        if self.da_output_head != None:
+            trg_da_output_loss = add_prefix(self.da_output_head(pred_maps, is_source=False), 'trg_output')
+            losses.update(trg_da_output_loss)
         # cate loss
-        if self.enable_category_loss or self.enable_ease_loss:
+        # feat_neck or feat_pred ?
+        if self.enable_category_loss:
             trg_anchor, trg_weight = self.cal_anchor_and_weight(
-                feat_maps=feat_maps, pred_maps=pred_maps, sign='trg')
-            # trg_anchor, trg_weight = self.cal_anchor_and_weight(
-            #     feat_maps=feat[-3:], pred_maps=pred_maps, sign='trg')
+                feat_maps=feat_pred, pred_maps=pred_maps, sign='trg')
+
         # src
-        feat = model.extract_feat(img)
-        src_da_loss = add_prefix(self.da_head(feat[-3:], is_source=True),'src')
-        losses.update(src_da_loss)
-        feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
-        src_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=True), 'src_ano')
-        # src_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=True), 'src_pred')
-        losses.update(src_da_ano_loss)
-        # losses.update(src_da_pred_loss)
-        # auxhead cls loc loss
-        if self.auxiliary_head_num != 0:
-            feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
-            losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=True), 'src'))
+        feat_bb, feat_neck = model.extract_feat_mine(source_img)
+        feat_pred, pred_maps = model.bbox_head.return_feat_pred(feat_neck)
+        if self.da_backbone_head != None:
+            src_da_bb_loss = add_prefix(self.da_backbone_head(feat_bb, is_source=False), 'src_bb')
+            losses.update(src_da_bb_loss)
+        if self.da_neck_head != None:
+            src_da_neck_loss = add_prefix(self.da_neck_head(feat_neck, is_source=False), 'src_neck')
+            losses.update(src_da_neck_loss)
+        if self.da_pred_head != None:
+            src_da_pred_loss = add_prefix(self.da_pred_head(feat_pred, is_source=False), 'src_pred')
+            losses.update(src_da_pred_loss)
+        if self.da_output_head != None:
+            src_da_output_loss = add_prefix(self.da_output_head(pred_maps, is_source=False), 'src_output')
+            losses.update(src_da_output_loss)
         # cate loss
-        if self.enable_category_loss or self.enable_ease_loss:
+        # feat_neck or feat_pred ?
+        if self.enable_category_loss:
             src_anchor, src_weight = self.cal_anchor_and_weight(
-                feat_maps=feat_maps, pred_maps=model.bbox_head.return_target_maps_list(
-                pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
-            # src_anchor, src_weight = self.cal_anchor_and_weight(
-            #     feat_maps=feat[-3:], pred_maps=model.bbox_head.return_target_maps_list(
-            #     pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
+                feat_maps=feat_pred, pred_maps=pred_maps, sign='src')
+        
         # head loss
         loss = model.bbox_head.forward_train(
-            feat, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
+            feat_neck, source_img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
         losses.update(loss) 
-
-        # auxhead loss, ban bp
-        if self.auxiliary_head_num != 0:
-            feat_clone = [ele.clone().detach() for ele in feat]
-            for i in range(self.auxiliary_head_num):
-                loss = self.auxiliary_head[i].forward_train(
-                feat_clone, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
-                losses.update(add_prefix(loss, f'aux_{i}')) 
-        
+        # print([ele.shape for ele in src_anchor])
+        # print([ele.shape for ele in trg_anchor])
+        # print([ele.shape for ele in src_weight])
+        # print([ele.shape for ele in trg_weight])
+        # input('ck')
         # category loss
         if self.enable_category_loss:
             for i in range(3):
                 loss = self.category_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
                 losses.update(add_prefix(loss, f'anchor_{i}'))
         
-        # ease loss
-        if self.enable_ease_loss:
-            for i in range(3):
-                loss = self.ease_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
-                losses.update(add_prefix(loss, f'anchor_{i}'))
-        
         ### !!!
         # update memory bank
-        if self.enable_category_loss or self.enable_ease_loss:
+        if self.enable_category_loss:
             for i in range(len(src_anchor)):
                 self.update_memory_bank(src_anchor[i], src_weight[i], i, 'src')
                 self.update_memory_bank(trg_anchor[i], trg_weight[i], i, 'trg')
@@ -402,7 +399,6 @@ class UDAModel(SingleStageDetector):
                 profile=None,
                 sci_mode=False
             )
-            mmcv.print_log(f'cate weight: {[self.loss_weight[i] for i in range(len(self.loss_weight))]} ', 'mmdet')
             mmcv.print_log(f'layer_lvl: {layer_lvl} ', 'mmdet')
             mmcv.print_log(f'src_weight_{layer_lvl}: {self.src_weight[layer_lvl].t()} ', 'mmdet')
             mmcv.print_log(f'trg_weight_{layer_lvl}: {self.trg_weight[layer_lvl].t()} ', 'mmdet')
@@ -503,37 +499,37 @@ class UDAModel(SingleStageDetector):
             loss = -(pred_map_cat.squeeze().t() @ (dis_matrix - sim_matrix) @ pred_map_cat.squeeze()).trace() * self.ease_weight
         return ({f'loss_ease_{layer_lvl}':loss})
 
-    def init_linear(self, cin, cout):
-        self.beta = 1
-        self.q = 0.5
-        self.s = 2
-        self.lr = 0.2
-        # Initialize linear as an orthonormal matrix
-        cout, cin = self.linear_layer.weight.shape
-        index = torch.arange(cout) 
-        self.linear_layer.weight[index, index] = 1
-        self.M_his = torch.zeros_like(self.linear_layer)
+    # def init_linear(self, cin, cout):
+    #     self.beta = 1
+    #     self.q = 0.5
+    #     self.s = 2
+    #     self.lr = 0.2
+    #     # Initialize linear as an orthonormal matrix
+    #     cout, cin = self.linear_layer.weight.shape
+    #     index = torch.arange(cout) 
+    #     self.linear_layer.weight[index, index] = 1
+    #     self.M_his = torch.zeros_like(self.linear_layer)
     
-    def update_linear(self, grad):
-        unity = self.linear_layer.weight
-        M = self.beta * self.M_his - grad.t()   
-        MX = torch.mm(M, unity)
-        XMX = torch.mm(unity, MX)
-        XXMX = torch.mm(unity.t(), XMX)
-        W_hat = MX - 0.5 * XXMX
-        W = W_hat - W_hat.t()
-        t = self.q * 2 / (W.norm() + self.eps)                    
-        alpha = min(t, self.lr)
-        Y = self.Cayley_loop(unity.t(), W, M, alpha)
-        self.M_his = torch.mm(W, unity.t()) # n-by-p
-        self.linear_layer.weight = Y
+    # def update_linear(self, grad):
+    #     unity = self.linear_layer.weight
+    #     M = self.beta * self.M_his - grad.t()   
+    #     MX = torch.mm(M, unity)
+    #     XMX = torch.mm(unity, MX)
+    #     XXMX = torch.mm(unity.t(), XMX)
+    #     W_hat = MX - 0.5 * XXMX
+    #     W = W_hat - W_hat.t()
+    #     t = self.q * 2 / (W.norm() + self.eps)                    
+    #     alpha = min(t, self.lr)
+    #     Y = self.Cayley_loop(unity.t(), W, M, alpha)
+    #     self.M_his = torch.mm(W, unity.t()) # n-by-p
+    #     self.linear_layer.weight = Y
 
-    def Cayley_loop(self, X, W, tan_vec, t): # 
-        [n, p] = X.size()
-        Y = X + t * tan_vec
-        for i in range(2):
-            Y = X + t * torch.matmul(W, 0.5*(X+Y))
-        return Y.t()
+    # def Cayley_loop(self, X, W, tan_vec, t): # 
+    #     [n, p] = X.size()
+    #     Y = X + t * tan_vec
+    #     for i in range(2):
+    #         Y = X + t * torch.matmul(W, 0.5*(X+Y))
+    #     return Y.t()
 
     # aux head pred loss
     def cal_aux_cls_loc_loss(self, feat, is_source=True):

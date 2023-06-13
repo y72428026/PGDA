@@ -42,6 +42,7 @@ from .two_stage import TwoStageDetector
 from .vfnet import VFNet
 from .yolact import YOLACT
 from .yolo import YOLOV3
+from .yolo_mine import YOLOV3_mine
 from .yolof import YOLOF
 from .yolox import YOLOX
 # from ..da_heads.UDAModel import UDAModel
