@@ -1,5 +1,5 @@
 import subprocess, pynvml
-import random
+import random, sys
 
 # Set the "-e" option
 subprocess.run("set -e", shell=True)
@@ -33,6 +33,7 @@ def choose_available_gpu() -> int:
 # Set variables
 GPUS_num = 2
 gpu = choose_available_gpu()
+# gpu=4
 # GPUS = "0,1"
 GPUS = "2,3"
 PORT = random.randint(29500, 29599)
@@ -50,7 +51,8 @@ conf_T=0
 pred_T=0
 a=0.1
 cfa_weight=0
-DA_list=['1t1t1t1t', '1t1t1t0', '1t1t00', '1t000', '1h1h1h1h', '1h1h1h0', '1h1h00', '1h000']
+# DA_list=['1t1t1t1t', '1t1t1t0', '1t1t00', '1t000', '1h1h1h1h', '1h1h1h0', '1h1h00', '1h000']
+DA_list=['1k1k1k1k', '1k1k1k0', '1k1k00', '1k000', '1w1w1w1w', '1w1w1w0', '1w1w00', '1w000']
 DA = DA_list[gpu]
 model_tag="UDA" 
 tag='3class'

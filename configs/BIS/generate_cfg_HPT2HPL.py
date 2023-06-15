@@ -10,26 +10,25 @@ print(template_name)
 template_path = os.path.join(root_path,template_name)
 
 # GFA weight
-# DA='75k75k0'
-DA='1t1t1t0'
-DA_w0=10
-DA_w1=10
-DA_w2=10
-DA_w3=0
+DA='1k1k1k1k'
+DA_w0=1000
+DA_w1=1000
+DA_w2=1000
+DA_w3=1000
 # CFA weight
-cfa_weight_list=[0.0625]
+cfa_weight_list=[0]
 # cfa_weight_list=[0.05, 0.075, 0.0875, 0.0375, 0.025, 0.0125, 0.001]
 cfg_v_list=[9]
 # [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-conf_T_list=[0.3]
+conf_T_list=[0]
 # pred_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-pred_T_list=[0.7]
+pred_T_list=[0]
 # a_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 a_list=[0.1]
 
 # if use fp16
-fp16='-fp16'
-# fp16=''
+# fp16='-fp16'
+fp16=''
 
 new_cfg_path = os.path.join(root_path,dataset)
 if not os.path.exists(new_cfg_path):

@@ -1,11 +1,11 @@
-_base_ = [  '../../yolo/yolov3-UDA-640-HPT2HPL-3class-0000-0-fp16.py']
+_base_ = [  '../../yolo/yolov3-UDA-640-HPT2HPL-3class-0000-0.py']
 
 uda=dict(
     da_backbone_head=dict(
-        img_weight=10,
+        img_weight=1000,
     ),
     da_neck_head=dict(
-        img_weight=10,
+        img_weight=1000,
     ),
     da_pred_head=dict(
         img_weight=0,
@@ -21,4 +21,3 @@ uda=dict(
     cfa_v=9,
     )
 
-fp16 = dict(loss_scale='dynamic')

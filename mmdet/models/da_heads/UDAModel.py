@@ -156,16 +156,16 @@ class UDAModel(SingleStageDetector):
         feat_bb, feat_neck = model.extract_feat_mine(source_img)
         feat_pred, pred_maps = model.bbox_head.return_feat_pred(feat_neck)
         if self.da_backbone_head != None:
-            src_da_bb_loss = add_prefix(self.da_backbone_head(feat_bb, is_source=False), 'src_bb')
+            src_da_bb_loss = add_prefix(self.da_backbone_head(feat_bb, is_source=True), 'src_bb')
             losses.update(src_da_bb_loss)
         if self.da_neck_head != None:
-            src_da_neck_loss = add_prefix(self.da_neck_head(feat_neck, is_source=False), 'src_neck')
+            src_da_neck_loss = add_prefix(self.da_neck_head(feat_neck, is_source=True), 'src_neck')
             losses.update(src_da_neck_loss)
         if self.da_pred_head != None:
-            src_da_pred_loss = add_prefix(self.da_pred_head(feat_pred, is_source=False), 'src_pred')
+            src_da_pred_loss = add_prefix(self.da_pred_head(feat_pred, is_source=True), 'src_pred')
             losses.update(src_da_pred_loss)
         if self.da_output_head != None:
-            src_da_output_loss = add_prefix(self.da_output_head(pred_maps, is_source=False), 'src_output')
+            src_da_output_loss = add_prefix(self.da_output_head(pred_maps, is_source=True), 'src_output')
             losses.update(src_da_output_loss)
         # cate loss
         # feat_neck or feat_pred ?
