@@ -1,4 +1,7 @@
-import glob, os, argparse
+import glob
+import os
+import argparse
+
 
 def parse_args():
     args = argparse.ArgumentParser(description='Train a detector')
@@ -9,9 +12,12 @@ def parse_args():
     args.add_argument("--work_dir", type=str, default="")
     args.add_argument("--gpu", type=int, default=0)
     return args.parse_args()
+
+
 args = parse_args()
 
-root_dir = "/data/yebh"
+# root_dir = "/data/yebh"
+root_dir = os.getcwd().split("yebh")[0] + 'yebh'
 mmdet2_dir = f"{root_dir}/mmdet2"
 work_dir = os.path.join(mmdet2_dir, args.work_dir)
 config_dir = os.path.join(mmdet2_dir, args.config_dir)
