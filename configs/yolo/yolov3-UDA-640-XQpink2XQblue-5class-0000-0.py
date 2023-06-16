@@ -1,30 +1,33 @@
-_base_ = [  './yolov3_d53_mstrain-608_273e_coco.py', ]
+import os
+_base_ = ['./yolov3_d53_mstrain-608_273e_coco.py', ]
 
 # fp16 = dict(loss_scale='dynamic')
 # samples_per_gpu=32
-samples_per_gpu=8
-workers_per_gpu=4
+samples_per_gpu = 8
+workers_per_gpu = 4
 evaluation = dict(interval=1, metric=['bbox'])
-log_config = dict(interval=15)
-find_unused_parameters=True
+log_config = dict(interval=30)
+find_unused_parameters = True
+epoch = 150
 
-image_scale=(640,640)
-dataset_tag = 'HP3class1'
-source_dataset = 'HPT'
-target_dataset = 'HPL'
+image_scale = (640, 640)
+dataset_tag = 'XQ5class'
+source_dataset = 'XQpink'
+target_dataset = 'XQblue'
 classes = (
+    "Triangle offset",
     "remnant",
     "broken",
-    "white border")
-num_classes=3
+    "White border",
+    "folds")
+num_classes = len(classes)
 
 anchors = [
     [(352, 62), (401, 81), (353, 106)],
-    [(46, 30), (87, 38), (124, 80)], 
+    [(46, 30), (87, 38), (124, 80)],
     [(12, 8), (22, 13), (37, 18)],
 ]
 
-import os
 trainpath = os.getcwd()
 root_dir = trainpath[:trainpath.find('yebh')]+'yebh/'
 load_from = root_dir + f'/checkpoint/{source_dataset}/best_addmodel.pth'
@@ -54,32 +57,32 @@ model = dict(
             loss_weight=2.0,
             reduction='sum'),
         loss_wh=dict(type='MSELoss', loss_weight=2.0, reduction='sum'))
-    )
+)
 
-uda=dict(
+uda = dict(
     type='UDAModel',
     da_backbone_head=dict(
         type='DomainAdaptationHead',
         in_channels=[256, 512, 1024],
         GAN_type='LSGAN',
-        img_weight=0,  
+        img_weight=0,
     ),
     da_neck_head=dict(
         type='DomainAdaptationHead',
         in_channels=[512, 256, 128],
         GAN_type='LSGAN',
-        img_weight=0,  
+        img_weight=0,
     ),
     da_pred_head=dict(
         type='DomainAdaptationHead',
-        in_channels=[1024, 512, 256],  
+        in_channels=[1024, 512, 256],
         GAN_type='LSGAN',
-        # in_channels=[1024+128, 512+128, 256+128],  
+        # in_channels=[1024+128, 512+128, 256+128],
         img_weight=0,
     ),
     da_output_head=dict(
         type='DomainAdaptationHead',
-        in_channels=[3*(5+num_classes), 3*(5+num_classes), 3*(5+num_classes)],  
+        in_channels=[3*(5+num_classes), 3*(5+num_classes), 3*(5+num_classes)],
         img_weight=0,
     ),
     cfa_thres=0.5,
@@ -89,7 +92,7 @@ uda=dict(
     ease_weight=1e-5,
     auxiliary_head_num=0,
     num_classes=num_classes,
-    )
+)
 img_norm_cfg = dict(mean=[0, 0, 0], std=[255., 255., 255.], to_rgb=True)
 train_pipeline = [
     dict(type='LoadImageFromFile', to_float32=True),
@@ -131,33 +134,41 @@ dataset_type = 'CocoDataset'
 data = dict(
     samples_per_gpu=samples_per_gpu,
     workers_per_gpu=workers_per_gpu,
-    train=dict( 
+    train=dict(
         _delete_=True,
         type='UDADataset',
         source=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=root_dir+f'dataset/{dataset_tag}/{source_dataset}/JPEGImages',
-            ann_file=root_dir+f'dataset/{dataset_tag}/{source_dataset}/{source_dataset}_all.json',
+            img_prefix=root_dir +
+            f'dataset/{dataset_tag}/{source_dataset}/JPEGImages',
+            ann_file=root_dir +
+            f'dataset/{dataset_tag}/{source_dataset}/{source_dataset}_all.json',
             pipeline=train_pipeline),
         target=dict(
             type=dataset_type,
             classes=classes,
-            img_prefix=root_dir+f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
-            ann_file=root_dir+f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_trainval.json',
+            img_prefix=root_dir +
+            f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
+            ann_file=root_dir +
+            f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_trainval.json',
             pipeline=train_pipeline),
-        ),
+    ),
     val=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=root_dir+f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
-        ann_file=root_dir+f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_test.json',
+        img_prefix=root_dir +
+        f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
+        ann_file=root_dir +
+        f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_test.json',
         pipeline=test_pipeline),
     test=dict(
         type=dataset_type,
         classes=classes,
-        img_prefix=root_dir+f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
-        ann_file=root_dir+f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_test.json',
+        img_prefix=root_dir +
+        f'dataset/{dataset_tag}/{target_dataset}/JPEGImages',
+        ann_file=root_dir +
+        f'dataset/{dataset_tag}/{target_dataset}/{target_dataset}_test.json',
         pipeline=test_pipeline))
 
 
@@ -171,7 +182,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[218, 246])
+    step=[218*epoch//273, 246*epoch//273])
 
-runner = dict(type='EpochBasedRunner', max_epochs=273)
+runner = dict(type='EpochBasedRunner', max_epochs=epoch)
 auto_scale_lr = dict(base_batch_size=64)

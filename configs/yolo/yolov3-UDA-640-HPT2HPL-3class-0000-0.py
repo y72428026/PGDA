@@ -7,7 +7,7 @@ workers_per_gpu=4
 evaluation = dict(interval=1, metric=['bbox'])
 log_config = dict(interval=15)
 find_unused_parameters=True
-
+epoch = 200
 image_scale=(640,640)
 dataset_tag = 'HP3class'
 source_dataset = 'HPT'
@@ -171,7 +171,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[218, 246])
+    step=[epoch*218//273, epoch*246//273])
 
-runner = dict(type='EpochBasedRunner', max_epochs=273)
+runner = dict(type='EpochBasedRunner', max_epochs=epoch*273//273)
 auto_scale_lr = dict(base_batch_size=64)
