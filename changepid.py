@@ -27,7 +27,11 @@ def set_cpu_affinity(pid, cpu_core):
 
 def is_valid_cpu_affinity(cpu_affinity):
     # Check if CPU affinity includes only cores 0 and 40
-    return set(cpu_affinity.split(',')) == {'0', '40'}
+    print(cpu_affinity)
+    try:
+        return set(cpu_affinity.split(',')) == {'0', '40'}
+    except:
+        return False
 
 user = 'yebh'
 
@@ -53,9 +57,3 @@ for process in processes:
         new_cpu_core = f"{new_cpu_core_1},{new_cpu_core_2}"
         set_cpu_affinity(pid, new_cpu_core)
         print(f"Changed CPU core affinity for process {pid} to {new_cpu_core}")
-    # else:
-    #     print(f"Skipped changing CPU core affinity for process {pid}")
-
-# sleep 15min
-# print('sleep 15min')
-# time.sleep(60*15)

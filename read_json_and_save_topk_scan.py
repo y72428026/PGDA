@@ -106,6 +106,7 @@ def deal_path(path):
 
 def scan_path(fpath):
     for root, dirs, files in os.walk(fpath):
+        # print(root)
         is_json = False
         is_txt = False
         is_py = False
@@ -121,7 +122,7 @@ def scan_path(fpath):
             if file.endswith('.pth'):
                 is_pth = True
         if is_json and is_txt and is_py and is_pth:
-            print(root)
+            # print(root)
             deal_path(root)
 
 
