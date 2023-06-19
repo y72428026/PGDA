@@ -36,7 +36,8 @@ def choose_available_gpu() -> int:
 
 # Set variables
 GPUS_num = 2
-gpu = choose_available_gpu()
+# gpu = choose_available_gpu()
+gpu = 7
 # gpu=4
 # GPUS = "0,1"
 GPUS = "2,3"
@@ -46,46 +47,39 @@ target_dataset = "XQY"
 dataset = f"{source_dataset}2{target_dataset}"
 resolution = 640
 
-# root_dir = "/data/yebh/mmdet2"
 root_dir = sys.path[0].split("mmdet2")[0] + 'mmdet2'
 dataset_type = "BIS"
 version = 1
 tag = ''
 
 cfav = 9
-conf_T = 0
-pred_T = 0
+conf_T_list = [0.2, 0.3, 0.4, 0.6, 0.7, 0.8, 0.8, 0.9]
+conf_T = conf_T_list[gpu]
+pred_T = conf_T
 a = 0.1
-cfa_weight = 0
+cfa_weight = 0.01
 
-DA_list = [
-    '2150-2150-2150-0',
-    '4620-4620-4620-0',
-    '215-215-215-0',
-    '462-462-462-0'
-]
-
+DA = '462-462-462-0'
 model_tag = "UDA"
 tag = '5class'
 dataset_tag = f'XQ{tag}'
 cfg_tag = f'{tag}'
 fp16 = ''
 for version in [1, 2, 3]:
-    for DA in DA_list:
-        config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
-        work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
-        work_dir = f"{work_dir}-v{version}"
+    config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
+    work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
+    work_dir = f"{work_dir}-v{version}"
 
-        subprocess.run(f"python {root_dir}/tools/train.py "
-                       f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
+    subprocess.run(f"python {root_dir}/tools/train.py "
+                   f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
 
-        # subprocess.run(f"CUDA_VISIBLE_DEVICES={GPUS} python -m torch.distributed.launch "
-        #                f"--nnodes=1 --node_rank=0 --master_addr=127.0.0.1 --nproc_per_node={GPUS_num} "
-        #                f"--master_port={PORT} {root_dir}/tools/train.py "
-        #                f"{config_dir} --work-dir={work_dir} --auto-scale-lr --seed=1079546523 "
-        #                f"--launcher pytorch", shell=True)
+    subprocess.run(
+        f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
+    subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
+                   f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
 
-        subprocess.run(
-            f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
-        subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
-                       f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
+    # subprocess.run(f"CUDA_VISIBLE_DEVICES={GPUS} python -m torch.distributed.launch "
+    #                f"--nnodes=0 --node_rank=0 --master_addr=127.0.0.1 --nproc_per_node={GPUS_num} "
+    #                f"--master_port={PORT} {root_dir}/tools/train.py "
+    #                f"{config_dir} --work-dir={work_dir} --auto-scale-lr --seed=1079546522 "
+    #                f"--launcher pytorch", shell=True)

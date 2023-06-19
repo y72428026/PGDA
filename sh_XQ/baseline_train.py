@@ -12,7 +12,7 @@ subprocess.run("set -e", shell=True)
 def choose_available_gpu() -> int:
     # judge the status of GPU : if GPU is available,
     # then scan the queue( can by folder json etc.) and run the job, return the result to user
-    percent_not_used = 0.1  # 10% of GPU memory is not used
+    percent_not_used = 0.01  # 10% of GPU memory is not used
     pynvml.nvmlInit()
     count = pynvml.nvmlDeviceGetCount()
     # print("GPU count: %d" % count)

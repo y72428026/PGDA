@@ -1,5 +1,7 @@
 # walk the path, if the number of pth in the dir is more than 15, execute the following code
-import os, shutil, time
+import os
+import shutil
+import time
 
 path = os.getcwd()
 scan_path = os.path.join(path, 'work_dirs')
@@ -15,7 +17,8 @@ while 1:
             except:
                 gpu = 7
             print(root, ' start_pth_num: ', pth_num)
-            os.system(f'python read_json_and_save_top20.py --path={root} --gpu={gpu}') 
+            os.system(
+                f'python read_json_and_save_top20.py --path={root} --gpu={gpu}')
     # sleep 15min
-    print('sleep 15min')
-    time.sleep(60*15)
+    print('sleep 10min')
+    time.sleep(60*10)
