@@ -2,6 +2,7 @@
 import os
 import shutil
 import time
+from read_json_and_save_topk_scan import deal_path
 
 path = os.getcwd()
 scan_path = os.path.join(path, 'work_dirs')
@@ -17,8 +18,9 @@ while 1:
             except:
                 gpu = 7
             print(root, ' start_pth_num: ', pth_num)
-            os.system(
-                f'python read_json_and_save_top20.py --path={root} --gpu={gpu}')
+            # os.system(
+            #     f'python read_json_and_save_topk_scan.py --path={root} --gpu={gpu}')
+            deal_path(root)
     # sleep 15min
     print('sleep 10min')
     time.sleep(60*10)

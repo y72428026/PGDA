@@ -101,7 +101,7 @@ def deal_path(path):
                             --log_dir {log_dir}')
 
     # test
-    multi_test(path, args.gpu)
+    # multi_test(path, args.gpu)
 
 
 def scan_path(fpath):
