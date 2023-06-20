@@ -49,11 +49,12 @@ for process in processes:
         input('is_valid_cpu_affinity')
     if cpu_affinity and is_valid_cpu_affinity(cpu_affinity):
         # Generate a new random CPU core
-        new_cpu_core_1 = random.randint(0, 40)
-        while True:
-            new_cpu_core_2 = random.randint(0, 40)
-            if new_cpu_core_2 != new_cpu_core_1:
-                break
-        new_cpu_core = f"{new_cpu_core_1},{new_cpu_core_2}"
+        # new_cpu_core_1 = random.randint(0, 40)
+        # while True:
+        #     new_cpu_core_2 = random.randint(0, 40)
+        #     if new_cpu_core_2 != new_cpu_core_1:
+        #         break
+        # new_cpu_core = f"{new_cpu_core_1},{new_cpu_core_2}"
+        new_cpu_core = "0-40"
         set_cpu_affinity(pid, new_cpu_core)
         print(f"Changed CPU core affinity for process {pid} to {new_cpu_core}")

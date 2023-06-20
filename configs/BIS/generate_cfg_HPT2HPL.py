@@ -10,20 +10,20 @@ print(template_name)
 template_path = os.path.join(root_path,template_name)
 
 # GFA weight
-DA_w0=4620
-DA_w1=DA_w0
-DA_w2=DA_w1
+DA_w0=462
+DA_w1=462
+DA_w2=462
 DA_w3=0
 # CFA weight
 # cfa_weight_list=[1, 0.1, 0.01, 0.001, 0.005, 0.05, 0.075, 0.025]
-cfa_weight_list=[0]
+cfa_weight_list=[0.075]
 cfg_v_list=[9]
 
 # conf_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 # pred_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 
-conf_T_list=[0]
-pred_T_list=[0]
+conf_T_list=[0.4,0.5,0.6,0.7,0.8]
+pred_T_list=[0.4,0.5,0.6,0.7,0.8]
 # pred_T_list=[0]
 # a_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
 a_list=[0.1]
@@ -39,6 +39,7 @@ if not os.path.exists(new_cfg_path):
 # generate cfg
 for conf_T in conf_T_list:
     for pred_T in pred_T_list:
+        # pred_T = conf_T 
         for a in a_list:
             for cfg_v in cfg_v_list:
                 for cfa_weight in cfa_weight_list:

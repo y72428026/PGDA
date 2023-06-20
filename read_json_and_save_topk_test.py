@@ -20,7 +20,7 @@ topK = 10
 root_path = os.getcwd()
 # print(root_path)
 path = os.path.join(root_path, 'work_dirs')
-
+path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/DA'
 
 def deal_path(path):
     list_json = []
@@ -32,7 +32,7 @@ def deal_path(path):
     for file_name in file_list:
         if file_name.endswith('.json'):
             path_json = os.path.join(path, file_name)
-            # print(file_name)
+            print(file_name)
             with open(path_json, 'r') as load_f:
                 for line in load_f.readlines():
                     dict_json = json.loads(line)
@@ -101,12 +101,11 @@ def deal_path(path):
                             --log_dir {log_dir}')
 
     # test
-    # multi_test(path, args.gpu)
+    multi_test(path, args.gpu)
 
 
 def scan_path(fpath):
     for root, dirs, files in os.walk(fpath):
-        # print(root)
         is_json = False
         is_txt = False
         is_py = False
@@ -122,7 +121,7 @@ def scan_path(fpath):
             if file.endswith('.pth'):
                 is_pth = True
         if is_json and is_txt and is_py and is_pth:
-            # print(root)
+            print(root)
             deal_path(root)
 
 
