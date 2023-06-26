@@ -15,14 +15,7 @@ def parse_args():
     return args
 
 
-args = parse_args()
-topK = 10
-root_path = os.getcwd()
-# print(root_path)
-path = os.path.join(root_path, 'work_dirs')
-
-
-def deal_path(path):
+def deal_path(path=''):
     list_json = []
     dict_ap50 = dict()
     dict_apall = dict()
@@ -115,15 +108,21 @@ def scan_path(fpath):
         for file in files:
             if file.endswith('.json'):
                 is_json = True
-            if file.endswith('.txt'):
-                is_txt = True
+            # if file.endswith('.txt'):
+            #     is_txt = True
             if file.endswith('.py'):
                 is_py = True
             if file.endswith('.pth'):
                 is_pth = True
-        if is_json and is_txt and is_py and is_pth:
+        if is_json and is_py and is_pth:
             # print(root)
             deal_path(root)
 
-
-scan_path(path)
+if __name__ == '__main__':
+    args = parse_args()
+    topK = 10
+    root_path = os.getcwd()
+    # print(root_path)
+    # path = os.path.join(root_path, 'work_dirs')
+    path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL'
+    scan_path(path)
