@@ -20,6 +20,7 @@ path_json = ''
 root_path = sys.path[0]
 # input(root_path)
 path = os.path.join(root_path, args.path)
+path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/CFA_a/yolov3-UDA-640-HPT2HPL-3class-DA-462-462-462-0-cfav9-0.075-cT0.6-pT0.7-a0.7-v2'
 list_json = []
 dict_ap50 = dict()
 dict_apall = dict()

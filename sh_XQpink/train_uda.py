@@ -36,8 +36,8 @@ def choose_available_gpu() -> int:
 
 # Set variables
 GPUS_num = 2
-gpu = choose_available_gpu()
-# gpu=6
+# gpu = choose_available_gpu()
+gpu=5
 # GPUS = "0,1" GPUS = "2,3"
 PORT = random.randint(29500, 29599)
 source_dataset = "XQpink"
@@ -52,32 +52,35 @@ version = 1
 tag = ''
 
 cfav = 9
-conf_T = 0
-pred_T = 0
-a = 0.1
-cfa_weight = 0
-alist = [100, 215, 462, 1000, 2150, 4620, 10000]
-DA_list = [f'{ele}-{ele}-{ele}-0' for ele in alist]
-DA = DA_list[gpu]
+# conf_T_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+conf_T = 0.4
+pred_T = 0.4
+a_list=[0,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+# a = 0.1
+cfa_weight = 0.01
+DA = '462-462-462-0'
 model_tag = "UDA"
 tag = '5class'
 dataset_tag = f'XQ{tag}'
 cfg_tag = f'{tag}'
 fp16 = ''
 for version in [1, 2, 3]:
-    config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
-    work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
-    work_dir = f"{work_dir}-v{version}"
-
-    subprocess.run(f"python {root_dir}/tools/train.py "
-                f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
+    for a in [a_list[gpu-3], a_list[gpu], a_list[gpu+3]]: 
+        pred_T = conf_T
+        config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
+        work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
+        work_dir = f"{work_dir}-v{version}"
+        # print(config_dir)
+        subprocess.run(f"python {root_dir}/tools/train.py "
+                    f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
+        
+        subprocess.run(
+            f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
+        subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
+                       f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
 
     # subprocess.run(f"CUDA_VISIBLE_DEVICES={GPUS} python -m torch.distributed.launch "
     #                f"--nnodes=1 --node_rank=0 --master_addr=127.0.0.1 --nproc_per_node={GPUS_num} "
     #                f"--master_port={PORT} {root_dir}/tools/train.py "
     #                f"{config_dir} --work-dir={work_dir} --auto-scale-lr --seed=1079546523 "
     #                f"--launcher pytorch", shell=True)
-    subprocess.run(
-        f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
-    subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
-                   f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
