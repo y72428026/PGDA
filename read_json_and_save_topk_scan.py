@@ -4,7 +4,7 @@ import sys
 
 import argparse
 
-
+topK = 10
 def parse_args():
     parser = argparse.ArgumentParser(
         description='help demo,what writted here will be displaced in the first part of the help message.')

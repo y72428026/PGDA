@@ -44,9 +44,7 @@ print(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))
 for process in processes:
     pid = process[0]
     cpu_affinity = get_cpu_affinity(pid)
-    # if pid == '1137413':
-    #     print(f'cpu_affinity: {cpu_affinity}')
-    #     input('is_valid_cpu_affinity')
+    print(f'cpu_affinity: {cpu_affinity}')
     if cpu_affinity and is_valid_cpu_affinity(cpu_affinity):
         # Generate a new random CPU core
         # new_cpu_core_1 = random.randint(0, 40)

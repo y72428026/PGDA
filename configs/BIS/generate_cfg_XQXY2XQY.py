@@ -7,9 +7,8 @@ dataset_tag = '5class'
 model_tag = 'UDA'
 resolution = 640
 template_name = f'yolov3-{model_tag}-{resolution}-{dataset}-{dataset_tag}-template.py'
-print(template_name)
+# print(template_name)
 template_path = os.path.join(root_path, template_name)
-
 
 # GFA weight
 DA_w0 = 462
@@ -17,16 +16,19 @@ DA_w1 = DA_w0
 DA_w2 = DA_w0
 DA_w3 = 0
 # CFA weight
-cfa_weight_list = [0.01]
-# cfa_weight_list = [1, 0.1, 0.01, 0.001, 0.005, 0.05, 0.075, 0.025]
-# cfa_weight_list=[0.05, 0.075, 0.0875, 0.0375, 0.025, 0.0125, 0.001]
 cfg_v_list = [9]
-# [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+
+# cfa_weight_list = [0.01]
+cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
+
 conf_T_list = [0.7]
-# pred_T_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+# conf_T_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+
 pred_T_list = [0.7]
-a_list = [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9]
-# a_list = [0.1]
+# pred_T_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
+
+a_list = [0.1]
+# a_list = [0.05, 0.15, 0.25, 0.3, 0.35, 0.45]
 
 # if use fp16
 # fp16='-fp16'
