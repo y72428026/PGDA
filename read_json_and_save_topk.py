@@ -10,6 +10,8 @@ def parse_args():
     parser.add_argument('--path', default='.',
                         help='the architecture of CNN, at this time we only support alexnet and vgg.')
     parser.add_argument('--gpu', default=0, help='the index of gpu.')
+    parser.add_argument('--topK', default=10, help='the index of gpu.')
+    
     args = parser.parse_args()
     return args
 
@@ -25,7 +27,7 @@ dict_ap50 = dict()
 dict_apall = dict()
 dict_top = dict()
 
-topK = 10
+topK = args.topK
 
 file_list = os.listdir(path)
 for file_name in file_list:
@@ -97,7 +99,8 @@ def multi_test(work_dir, gpu=0):
                         {model_dir} \
                         --eval bbox \
                         --eval-options "classwise=True" \
-                        --log_dir {log_dir}')
+                        --log_dir {log_dir}'
+                        )
 
 
 # test

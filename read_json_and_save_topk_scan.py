@@ -122,7 +122,5 @@ if __name__ == '__main__':
     args = parse_args()
     topK = 10
     root_path = os.getcwd()
-    # print(root_path)
-    # path = os.path.join(root_path, 'work_dirs')
-    path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL'
+    path = os.path.join(root_path, 'work_dirs', 'BIS', 'HPT2HPL')
     scan_path(path)

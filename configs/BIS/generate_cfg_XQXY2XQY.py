@@ -12,14 +12,15 @@ template_path = os.path.join(root_path, template_name)
 
 # GFA weight
 DA_w0 = 462
+# DA_w0_list = [10, 21.5, 46.2, 100, 215, 462, 1000, 2150, 4620, 10000]
 DA_w1 = DA_w0
 DA_w2 = DA_w0
 DA_w3 = 0
 # CFA weight
 cfg_v_list = [9]
 
-# cfa_weight_list = [0.01]
-cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
+cfa_weight_list = [0.01]
+# cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
 
 conf_T_list = [0.7]
 # conf_T_list = [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1]
@@ -39,6 +40,7 @@ if not os.path.exists(new_cfg_path):
     os.makedirs(new_cfg_path, exist_ok=True)
 
 # generate cfg
+
 for conf_T in conf_T_list:
     for pred_T in pred_T_list:
         for a in a_list:
@@ -52,7 +54,7 @@ for conf_T in conf_T_list:
                         srcCfg = f.read().split("\n")
                         # fp16
                         srcCfg[1 -
-                               1] = f"_base_ = [  '../../yolo/yolov3-{model_tag}-{resolution}-{dataset}-{dataset_tag}-0000-0{fp16}.py']"
+                            1] = f"_base_ = [  '../../yolo/yolov3-{model_tag}-{resolution}-{dataset}-{dataset_tag}-0000-0{fp16}.py']"
                         # GFA weight
                         srcCfg[5-1] = f'        img_weight={DA_w0},'
                         srcCfg[8-1] = f'        img_weight={DA_w1},'
@@ -62,7 +64,7 @@ for conf_T in conf_T_list:
                         srcCfg[16-1] = f'    cfa_conf_thres={conf_T},'
                         srcCfg[17-1] = f'    cfa_pred_thres={pred_T},'
                         srcCfg[18 -
-                               1] = f'    enable_category_loss={cfa_weight>0},'
+                            1] = f'    enable_category_loss={cfa_weight>0},'
                         srcCfg[19-1] = f'    category_weight={cfa_weight},'
                         srcCfg[20-1] = f'    alpha_mb={a},'
                         srcCfg[21-1] = f'    cfa_v={cfg_v},'

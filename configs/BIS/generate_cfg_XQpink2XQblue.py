@@ -10,21 +10,27 @@ template_name = f'yolov3-{model_tag}-{resolution}-{dataset}-{dataset_tag}-templa
 template_path = os.path.join(root_path, template_name)
 
 # GFA weight
-DA_w0 = 462
-DA_w1 = DA_w0
-DA_w2 = DA_w0
+DA_w0 = 2150
+DA_w1 = 2150
+DA_w2 = 0
 DA_w3 = 0
+# DA_w0_list = [10, 21.5, 46.2, 100, 215, 462, 1000, 2150, 4620, 10000]
+
 # CFA weight
-cfa_weight_list = [0.01]
+cfa_weight_list = [0.0075]
 # cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
 
 cfg_v_list = [9]
 # [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-conf_T_list = [0.4]
-# conf_T_list=[0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-pred_T_list = [0.4]
-a_list=[0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
-# a_list = [0.1]
+
+conf_T_list = [0.9]
+# conf_T_list=[0.45,0.55,0.6,0.65,0.75,0.85,0.95]
+
+pred_T_list = [0.6]
+# pred_T_list = [0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]
+
+a_list = [0.1]
+# a_list = [0.2, 0.4, 0.5]
 
 # if use fp16
 # fp16='-fp16'
@@ -37,12 +43,9 @@ if not os.path.exists(new_cfg_path):
 # generate cfg
 for conf_T in conf_T_list:
     for pred_T in pred_T_list:
-        pred_T = conf_T
         for a in a_list:
             for cfg_v in cfg_v_list:
                 for cfa_weight in cfa_weight_list:
-                    # name
-                    # new_cfg_name = f'uda-yolov3-{dataset}-SCL-{DA}-cfav{cfg_v}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py'
                     new_cfg_name = f'yolov3-{model_tag}-{resolution}-{dataset}-{dataset_tag}-DA-{DA_w0}-{DA_w1}-{DA_w2}-{DA_w3}-cfav{cfg_v}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py'
                     print(new_cfg_name)
                     with open(template_path, "r") as f:

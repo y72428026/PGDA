@@ -3,12 +3,12 @@ _base_ = ['./yolov3_d53_mstrain-608_273e_coco.py', ]
 
 # fp16 = dict(loss_scale='dynamic')
 # samples_per_gpu=32
-samples_per_gpu = 16
+samples_per_gpu = 8
 workers_per_gpu = 4
 evaluation = dict(interval=1, metric=['bbox'])
-log_config = dict(interval=15)
+log_config = dict(interval=30)
 find_unused_parameters = True
-
+epoch = 200
 image_scale = (640, 640)
 dataset_tag = 'XQ5class'
 source_dataset = 'XQXY'
@@ -181,7 +181,7 @@ lr_config = dict(
     warmup='linear',
     warmup_iters=500,
     warmup_ratio=0.001,
-    step=[218, 246])
+    step=[218*epoch//273, 246*epoch//273])
 
-runner = dict(type='EpochBasedRunner', max_epochs=273)
+runner = dict(type='EpochBasedRunner', max_epochs=epoch)
 auto_scale_lr = dict(base_batch_size=64)
