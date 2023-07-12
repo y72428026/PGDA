@@ -3,7 +3,7 @@ _base_ = ['./yolov3_d53_mstrain-608_273e_coco.py', ]
 
 # fp16 = dict(loss_scale='dynamic')
 # samples_per_gpu=32
-samples_per_gpu = 8
+samples_per_gpu = 6
 workers_per_gpu = 4
 evaluation = dict(interval=1, metric=['bbox'])
 log_config = dict(interval=30)
