@@ -71,11 +71,34 @@ def build_detector_mine(cfg, train_cfg=None, test_cfg=None):
     assert cfg.get('test_cfg') is None or test_cfg is None, \
         'test_cfg specified in both outer field and model field '
     
-    # input(cfg.keys())
+    # # input(cfg.keys())
+    # if 'uda' in cfg:
+    #     # from mmdet.models.detectors.UDAModel import UDAModel
+    #     from mmdet.models.da_heads.UDAModel_after_SCL import UDAModel_SCL
+    #     from mmdet.models.da_heads.UDAModel import UDAModel
+    #     model = copy.deepcopy(cfg.model)
+    #     model_net = build_detector_mine(model, train_cfg=train_cfg, test_cfg=test_cfg)
+    #     cfg.uda['model'] = model
+    #     cfg.uda['max_epochs'] = cfg.runner.max_epochs 
+    #     cfg.uda['work_dir'] = cfg.get('work_dir','')
+    #     if cfg.uda.type == "UDAModel":
+    #         return UDAModel(model_net, **cfg.uda)
+    #     elif cfg.uda.type == "UDAModel_SCL":
+    #         return UDAModel_SCL(model_net, **cfg.uda)
+    # elif 'model' in cfg:
+    #     return DETECTORS.build(
+    #         cfg.model, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
+    # else:
+    #     return DETECTORS.build(
+    #         cfg, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))
     if 'uda' in cfg:
         # from mmdet.models.detectors.UDAModel import UDAModel
         from mmdet.models.da_heads.UDAModel_after_SCL import UDAModel_SCL
         from mmdet.models.da_heads.UDAModel import UDAModel
+        from mmdet.models.da_heads import UDAModel_Xtt
+        from mmdet.models.da_heads import UDAModel_Xts
+        from mmdet.models.da_heads import UDAModel_Xss
+        from mmdet.models.da_heads import UDAModel_Xst
         model = copy.deepcopy(cfg.model)
         model_net = build_detector_mine(model, train_cfg=train_cfg, test_cfg=test_cfg)
         cfg.uda['model'] = model
@@ -84,7 +107,22 @@ def build_detector_mine(cfg, train_cfg=None, test_cfg=None):
         if cfg.uda.type == "UDAModel":
             return UDAModel(model_net, **cfg.uda)
         elif cfg.uda.type == "UDAModel_SCL":
+            print('SCL')
             return UDAModel_SCL(model_net, **cfg.uda)
+        elif cfg.uda.type == "UDAModel_Xtt":
+            print('Xtt')
+            return UDAModel_Xtt(model_net, **cfg.uda)
+        elif cfg.uda.type == "UDAModel_Xst":
+            print('Xst')
+            return UDAModel_Xst(model_net, **cfg.uda)
+        elif cfg.uda.type == "UDAModel_Xss":
+            print('Xss')
+            return UDAModel_Xss(model_net, **cfg.uda)
+        elif cfg.uda.type == "UDAModel_Xts":
+            print('Xts')
+            return UDAModel_Xts(model_net, **cfg.uda)
+        else:
+            raise NotImplementedError(f"UDA type {cfg.uda.type} not implemented")
     elif 'model' in cfg:
         return DETECTORS.build(
             cfg.model, default_args=dict(train_cfg=train_cfg, test_cfg=test_cfg))

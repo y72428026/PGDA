@@ -30,7 +30,7 @@ def _params_equal(ema_model, model):
     return True
 
 # @DETECTORS.register_module()
-class UDAModel(SingleStageDetector):
+class UDAModel_Xts(SingleStageDetector):
     def __init__(self, model_net, 
                     da_backbone_head=None, 
                     da_neck_head=None, 

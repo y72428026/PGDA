@@ -69,10 +69,15 @@ a_list = [0.1]
 # work_dir_tag = 'a'
 # a_list = [0.05, 0.15, 0.25, 0.3, 0.35, 0.45]
 
-# DA_list = ['462-462-462-0']
-work_dir_tag = 'DA_aba'
-DA_list = ['462-462-462-0','462-462-0-0','462-0-0-0','0-0-0-0']
-DA = DA_list[gpu]
+DA_list = ['462-462-462-0']
+work_dir_tag = ''
+# work_dir_tag = 'DA_aba'
+# DA_list = ['462-462-462-0','462-462-0-0','462-0-0-0','0-0-0-0']
+# DA = DA_list[gpu]
+
+loss_tag_list = ['Xts','Xtt'] # gpu 6
+# loss_tag_list = ['Xtt'] # gpu 6
+# loss_tag_list = ['Xss','Xst']
 
 
 model_tag = "UDA"
@@ -85,16 +90,18 @@ for version in [1, 2, 3]:
         for conf_T in conf_T_list:
             for pred_T in pred_T_list:
                 for cfa_weight in cfa_weight_list:
-                    config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
-                    work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
-                    work_dir = f"{work_dir}-v{version}"
-                    subprocess.run(f"python {root_dir}/tools/train.py "
-                                f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
-
-                    subprocess.run(
-                        f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
-                    subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
-                                f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
+                    for DA in DA_list:
+                        for loss_tag in loss_tag_list:
+                            config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}-{loss_tag}.py"
+                            work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}-{loss_tag}"
+                            work_dir = f"{work_dir}-v{version}"
+                            subprocess.run(f"python {root_dir}/tools/train.py "
+                                        f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
+                            subprocess.run(
+                                f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu}", shell=True)
+                            subprocess.run(f"python {sys.path[0]}/test.py --source_dataset={source_dataset} --target_dataset {target_dataset} "
+                                        f"--config_dir={config_dir} --dataset_tag={dataset_tag} --work_dir={work_dir} --gpu={gpu}", shell=True)
+                        
     # subprocess.run(f"CUDA_VISIBLE_DEVICES={GPUS} python -m torch.distributed.launch "
     #                f"--nnodes=0 --node_rank=0 --master_addr=127.0.0.1 --nproc_per_node={GPUS_num} "
     #                f"--master_port={PORT} {root_dir}/tools/train.py "

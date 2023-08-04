@@ -724,3 +724,49 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
             )
         else:
             return batch_mlvl_bboxes, batch_mlvl_scores
+
+    def return_target_maps_list(self,
+             pred_maps,
+             gt_bboxes,
+             gt_labels,
+             img_metas,
+             gt_bboxes_ignore=None):
+        """Compute loss of the head.
+
+        Args:
+            pred_maps (list[Tensor]): Prediction map for each scale level,
+                shape (N, num_anchors * num_attrib, H, W)
+            gt_bboxes (list[Tensor]): Ground truth bboxes for each image with
+                shape (num_gts, 4) in [tl_x, tl_y, br_x, br_y] format.
+            gt_labels (list[Tensor]): class indices corresponding to each box
+            img_metas (list[dict]): Meta information of each image, e.g.,
+                image size, scaling factor, etc.
+            gt_bboxes_ignore (None | list[Tensor]): specify which bounding
+                boxes can be ignored when computing the loss.
+
+        Returns:
+            dict[str, Tensor]: prediction maps.
+        """
+        # print("return_target_maps_list")
+        # input([ele.shape for ele in pred_maps])
+        num_imgs = len(img_metas)
+        device = pred_maps[0][0].device
+
+        featmap_sizes = [
+            pred_maps[i].shape[-2:] for i in range(self.num_levels)
+        ]
+        mlvl_anchors = self.prior_generator.grid_priors(
+            featmap_sizes, device=device)
+        anchor_list = [mlvl_anchors for _ in range(num_imgs)]
+
+        responsible_flag_list = []
+        for img_id in range(len(img_metas)):
+            responsible_flag_list.append(
+                self.prior_generator.responsible_flags(featmap_sizes,
+                                                       gt_bboxes[img_id],
+                                                       device))
+
+        target_maps_list, neg_maps_list = self.get_targets(
+            anchor_list, responsible_flag_list, gt_bboxes, gt_labels)
+
+        return target_maps_list

@@ -30,7 +30,7 @@ def _params_equal(ema_model, model):
     return True
 
 # @DETECTORS.register_module()
-class UDAModel(SingleStageDetector):
+class UDAModel_Xss(SingleStageDetector):
     def __init__(self, model_net, 
                     da_backbone_head=None, 
                     da_neck_head=None, 
@@ -426,13 +426,13 @@ class UDAModel(SingleStageDetector):
         '''
         ### inter
         loss_inter_st = self.inter_loss(src_anchor, src_weight, self.trg_memory_bank[layer_lvl], self.trg_weight[layer_lvl]) 
-        # loss_inter_ts = self.inter_loss(trg_anchor, trg_weight, self.src_memory_bank[layer_lvl], self.src_weight[layer_lvl])
-        loss_inter_ss = self.inter_loss(src_anchor, src_weight, self.src_memory_bank[layer_lvl], self.src_weight[layer_lvl]) 
+        loss_inter_ts = self.inter_loss(trg_anchor, trg_weight, self.src_memory_bank[layer_lvl], self.src_weight[layer_lvl])
+        # loss_inter_ss = self.inter_loss(src_anchor, src_weight, self.src_memory_bank[layer_lvl], self.src_weight[layer_lvl]) 
         loss_inter_tt = self.inter_loss(trg_anchor, trg_weight, self.trg_memory_bank[layer_lvl], self.trg_weight[layer_lvl])
         losses = dict()
         losses['loss_inter_st'] = loss_inter_st * self.category_weight
-        # losses['loss_inter_ts'] = loss_inter_ts * self.category_weight
-        losses['loss_inter_ss'] = loss_inter_ss * self.category_weight
+        losses['loss_inter_ts'] = loss_inter_ts * self.category_weight
+        # losses['loss_inter_ss'] = loss_inter_ss * self.category_weight
         losses['loss_inter_tt'] = loss_inter_tt * self.category_weight
         return losses
 
