@@ -53,6 +53,7 @@ tag = ''
 
 cfav = 9
 
+# cfa_weight_list = [0]
 cfa_weight_list = [0.01]
 # work_dir_tag = 'cfaw'
 # cfa_weight_list = [0.0125, 0.015, 0.0175, 0.02, 0.0025, 0.005, 0.0075, 0.01]
@@ -75,9 +76,10 @@ work_dir_tag = ''
 # DA_list = ['462-462-462-0','462-462-0-0','462-0-0-0','0-0-0-0']
 # DA = DA_list[gpu]
 
-loss_tag_list = ['Xts','Xtt'] # gpu 6
-# loss_tag_list = ['Xtt'] # gpu 6
-# loss_tag_list = ['Xss','Xst']
+loss_tag_list = ['-Xts','-Xst','-Xss','-Xtt'] # gpu 6
+loss_tag = loss_tag_list[gpu-4]
+# loss_tag_list = ['-Xtt'] #,'-Xtt'] # gpu 6
+# loss_tag_list = []
 
 
 model_tag = "UDA"
@@ -85,15 +87,16 @@ tag = '5class'
 dataset_tag = f'XQ{tag}'
 cfg_tag = f'{tag}'
 fp16 = ''
-for version in [1, 2, 3]:
+for version in [1,2,3,4,5]:
     for a in a_list:
         for conf_T in conf_T_list:
             for pred_T in pred_T_list:
                 for cfa_weight in cfa_weight_list:
                     for DA in DA_list:
-                        for loss_tag in loss_tag_list:
-                            config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}-{loss_tag}.py"
-                            work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}-{loss_tag}"
+                        # for loss_tag in loss_tag_list:
+                        if True:
+                            config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}{loss_tag}.py"
+                            work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}{loss_tag}"
                             work_dir = f"{work_dir}-v{version}"
                             subprocess.run(f"python {root_dir}/tools/train.py "
                                         f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)

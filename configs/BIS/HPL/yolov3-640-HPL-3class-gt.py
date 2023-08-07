@@ -76,20 +76,17 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    # dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='MultiScaleFlipAug',
-        # img_scale=img_scale,
-        # flip=False,
         img_scale=img_scale,
-        flip=True,
+        flip=False,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
             dict(type='ImageToTensor', keys=['img']),
-            # dict(type='Collect', keys=['img'])
             dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
         ])
 ]

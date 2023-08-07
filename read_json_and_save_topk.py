@@ -10,7 +10,7 @@ def parse_args():
     parser.add_argument('--path', default='.',
                         help='the architecture of CNN, at this time we only support alexnet and vgg.')
     parser.add_argument('--gpu', default=0, help='the index of gpu.')
-    parser.add_argument('--topK', default=10, help='the index of gpu.')
+    parser.add_argument('--topK', type=int, default=10, help='the index of gpu.')
     
     args = parser.parse_args()
     return args
@@ -28,6 +28,7 @@ dict_apall = dict()
 dict_top = dict()
 
 topK = args.topK
+print(topK)
 
 file_list = os.listdir(path)
 for file_name in file_list:

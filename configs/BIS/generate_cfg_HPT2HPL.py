@@ -10,7 +10,7 @@ print(template_name)
 template_path = os.path.join(root_path,template_name)
 
 # GFA weight
-DA_w0=0
+DA_w0=462
 DA_w1=DA_w0
 DA_w2=DA_w0
 DA_w3=0

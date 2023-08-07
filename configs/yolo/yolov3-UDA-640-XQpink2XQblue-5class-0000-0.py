@@ -14,10 +14,10 @@ dataset_tag = 'XQ5class'
 source_dataset = 'XQpink'
 target_dataset = 'XQblue'
 classes = (
-    "Triangle offset",
+    "triangle offset",
     "remnant",
     "broken",
-    "White border",
+    "white border",
     "folds")
 num_classes = len(classes)
 

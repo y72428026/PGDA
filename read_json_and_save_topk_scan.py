@@ -82,7 +82,6 @@ def deal_path(path=''):
                     old_log_dir = f"{work_dir}/0_{i}th_{iter}iter.log"
                     log_dir = f'{work_dir}/0_{i}th_{iter}_APARF.log'
                     show_dir = f"{work_dir}/{iter}_image"
-                    # print(log_dir)
                     if not os.path.exists(log_dir):
                         if os.path.exists(old_log_dir):
                             os.remove(old_log_dir)

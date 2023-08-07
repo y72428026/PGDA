@@ -21,7 +21,9 @@ root_path = os.getcwd()
 # print(root_path)
 # path = os.path.join(root_path, 'work_dirs')
 path = '/data/yebh/mmdet2/work_dirs/BIS/'
-
+# path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/DA_not_use/yolov3-UDA-640-HPT2HPL-3class-1k000-cfav9-0-cT0-pT0-a0.1-v1'
+path = '/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/ok/CFA_w/yolov3-UDA-640-HPT2HPL-3class-DA-462-462-462-0-cfav9-0.025-cT0.6-pT0.7-a0.2-v4'
+# input(path)
 def deal_path(path):
     list_json = []
     dict_ap50 = dict()
@@ -87,18 +89,26 @@ def deal_path(path):
                     iter = int(line.split(',')[0][1:])
                     model_dir = f"{work_dir}/epoch_{iter}.pth"
                     old_log_dir = f"{work_dir}/0_{i}th_{iter}iter.log"
-                    log_dir = f'{work_dir}/0_{i}th_{iter}_APARF.log'
                     show_dir = f"{work_dir}/{iter}_image"
                     # print(log_dir)
+                    ### change nms
+                    # nms = 0.8
+                    nms = 0.45
+                    log_dir = f'{work_dir}/0_{i}th_{iter}_nms{nms}_APARF.log'
+                    # input(log_dir)
                     if not os.path.exists(log_dir):
+                        # pass
                         if os.path.exists(old_log_dir):
                             os.remove(old_log_dir)
                         os.system(f'CUDA_VISIBLE_DEVICES={gpu} python {root_path}/tools/test.py \
                             {config_dir} \
                             {model_dir} \
                             --eval bbox \
-                            --eval-options "classwise=True" \
-                            --log_dir {log_dir}')
+                            --log_dir {log_dir} \
+                            --eval-options classwise=True \
+                            --cfg-options model.test_cfg.nms.iou_threshold={nms} \
+                            model.test_cfg.score_thr=0.001 \
+                            model.test_cfg.conf_thr=0.001')
 
     # test
     multi_test(path, args.gpu)
@@ -120,10 +130,10 @@ def scan_path(fpath):
         if is_json and is_py and is_pth: 
             # print(root)
             # print(f"os.system(f'python ./read_json_and_save_topk.py --path {root} --gpu {7}')")
-            os.system(f'python ./read_json_and_save_topk.py --path {root} --gpu {3}')
+            # os.system(f'python ./read_json_and_save_topk.py --path {root} --gpu {3}')
             
 
-            # deal_path(root)
+            deal_path(root)
 
 if __name__ == '__main__':
     scan_path(path)

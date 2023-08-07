@@ -12,12 +12,13 @@ template_path = os.path.join(root_path, template_name)
 # GFA weight
 DA_w0 = 2150
 DA_w1 = 2150
-DA_w2 = 0
+DA_w2 = 2150
 DA_w3 = 0
 # DA_w0_list = [10, 21.5, 46.2, 100, 215, 462, 1000, 2150, 4620, 10000]
 
 # CFA weight
-cfa_weight_list = [0.0075]
+cfa_weight_list = [0]
+# cfa_weight_list = [0.0075]
 # cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
 
 cfg_v_list = [9]

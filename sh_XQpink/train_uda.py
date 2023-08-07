@@ -52,7 +52,8 @@ tag = ''
 
 cfav = 9
 
-cfa_weight_list = [0.0075]
+cfa_weight_list = [0]
+# cfa_weight_list = [0.0075]
 # work_dir_tag = 'cfaw'
 # cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
 
@@ -71,8 +72,10 @@ a_list = [0.1]
 # work_dir_tag = 'a'
 # a_list = [0.2, 0.4, 0.5]
 
-DA_list = ['0-0-0-0','2150-2150-0-0','2150-0-0-0']
-work_dir_tag = 'DA_aba'
+DA_list = ['2150-2150-2150-0']
+work_dir_tag = ''
+# DA_list = ['0-0-0-0','2150-2150-0-0','2150-0-0-0']
+# work_dir_tag = 'DA_aba'
 # DA_w0_list = [100, 215, 462, 1000, 2150, 4620, 10000, 10, 21.5, 46.2]
 # DA_list = []
 # for DA_w0 in DA_w0_list:
@@ -86,17 +89,19 @@ tag = '5class'
 dataset_tag = f'XQ{tag}'
 cfg_tag = f'{tag}'
 fp16 = ''
-for version in [1,2,3]:
+for version in [1]: #2,3]:
     for a in a_list:
         for conf_T in conf_T_list:
             for pred_T in pred_T_list:
                 for cfa_weight in cfa_weight_list:   
                     for DA in DA_list:
                         config_dir = f"{root_dir}/configs/{dataset_type}/{dataset}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}.py"
-                        work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}"
+                        work_dir = f"{root_dir}/work_dirs/{dataset_type}/{dataset}/{work_dir_tag}/yolov3-{model_tag}-{resolution}-{dataset}-{cfg_tag}-DA-{DA}-cfav{cfav}-{cfa_weight}-cT{conf_T}-pT{pred_T}-a{a}{fp16}-newanchor"
                         work_dir = f"{work_dir}-v{version}"
                         subprocess.run(f"python {root_dir}/tools/train.py "
-                                    f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523", shell=True)
+                                    f"{config_dir} --work-dir={work_dir} --gpu-id={gpu} --auto-scale-lr --seed=1079546523 "
+                                    f"--options uda.enable_category_loss=True"
+                                    , shell=True)
                         
                         subprocess.run(
                             f"python {root_dir}/read_json_and_save_topk.py --path={work_dir} --gpu={gpu} --topK=20", shell=True)

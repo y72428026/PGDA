@@ -56,100 +56,100 @@ class UDAModel_SCL(UDAModel):
             cfa_v=cfa_v,
             auxiliary_head_num=auxiliary_head_num, 
             **cfg)
-"""
-    def forward_train(self,
-                      img,
-                      img_metas,
-                      gt_bboxes,
-                      gt_labels,
-                      target_img=None,
-                      target_img_metas=None,
-                      gt_bboxes_ignore=None):
-        losses = dict()
-        model = self.get_model()
-        self.local_iter += 1
-        # feat.shape 
-        '''
-        # [   torch.Size([8, 512, 19, 18]), 
-        #     torch.Size([8, 256, 38, 36]), 
-        #     torch.Size([8, 128, 76, 72])]
-        '''
-        # trg
-        feat = model.extract_feat(target_img)
-        trg_da_loss = add_prefix(self.da_head(feat[-3:], is_source=False),'trg')
-        losses.update(trg_da_loss)
-        feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
-        trg_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=False), 'trg_ano')
-        # trg_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=False), 'trg_pred')
-        losses.update(trg_da_ano_loss)
-        # losses.update(trg_da_pred_loss)
-        # aux cls loc loss
-        if self.auxiliary_head_num != 0:
-            feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
-            losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=False), 'trg'))
-        # cate loss
-        if self.enable_category_loss or self.enable_ease_loss:
-            # trg_anchor, trg_weight = self.cal_anchor_and_weight(
-            #     feat_maps=feat_maps, pred_maps=pred_maps, sign='trg')
-            trg_anchor, trg_weight = self.cal_anchor_and_weight(
-                feat_maps=feat[-3:], pred_maps=pred_maps, sign='trg')
-        # src
-        feat = model.extract_feat(img)
-        src_da_loss = add_prefix(self.da_head(feat[-3:], is_source=True),'src')
-        losses.update(src_da_loss)
-        feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
-        # input([ele.shape for ele in feat])
-        # input([ele.shape for ele in feat_maps])
-        src_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=True), 'src_ano')
-        # src_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=True), 'src_pred')
-        losses.update(src_da_ano_loss)
-        # losses.update(src_da_pred_loss)
-        # auxhead cls loc loss
-        if self.auxiliary_head_num != 0:
-            feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
-            losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=True), 'src'))
-        # cate loss
-        if self.enable_category_loss or self.enable_ease_loss:
-            # src_anchor, src_weight = self.cal_anchor_and_weight(
-            #     feat_maps=feat_maps, pred_maps=model.bbox_head.return_target_maps_list(
-            #     pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
-            src_anchor, src_weight = self.cal_anchor_and_weight(
-                feat_maps=feat[-3:], pred_maps=model.bbox_head.return_target_maps_list(
-                pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
-            
-        # head loss
-        loss = model.bbox_head.forward_train(
-            feat, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
-        losses.update(loss) 
 
-        # auxhead loss, ban bp
-        if self.auxiliary_head_num != 0:
-            feat_clone = [ele.clone().detach() for ele in feat]
-            for i in range(self.auxiliary_head_num):
-                loss = self.auxiliary_head[i].forward_train(
-                feat_clone, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
-                losses.update(add_prefix(loss, f'aux_{i}')) 
+    # def forward_train(self,
+    #                   img,
+    #                   img_metas,
+    #                   gt_bboxes,
+    #                   gt_labels,
+    #                   target_img=None,
+    #                   target_img_metas=None,
+    #                   gt_bboxes_ignore=None):
+    #     losses = dict()
+    #     model = self.get_model()
+    #     self.local_iter += 1
+    #     # feat.shape 
+    #     '''
+    #     # [   torch.Size([8, 512, 19, 18]), 
+    #     #     torch.Size([8, 256, 38, 36]), 
+    #     #     torch.Size([8, 128, 76, 72])]
+    #     '''
+    #     # trg
+    #     feat = model.extract_feat(target_img)
+    #     trg_da_loss = add_prefix(self.da_head(feat[-3:], is_source=False),'trg')
+    #     losses.update(trg_da_loss)
+    #     feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
+    #     trg_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=False), 'trg_ano')
+    #     # trg_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=False), 'trg_pred')
+    #     losses.update(trg_da_ano_loss)
+    #     # losses.update(trg_da_pred_loss)
+    #     # aux cls loc loss
+    #     if self.auxiliary_head_num != 0:
+    #         feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
+    #         losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=False), 'trg'))
+    #     # cate loss
+    #     if self.enable_category_loss or self.enable_ease_loss:
+    #         # trg_anchor, trg_weight = self.cal_anchor_and_weight(
+    #         #     feat_maps=feat_maps, pred_maps=pred_maps, sign='trg')
+    #         trg_anchor, trg_weight = self.cal_anchor_and_weight(
+    #             feat_maps=feat[-3:], pred_maps=pred_maps, sign='trg')
+    #     # src
+    #     feat = model.extract_feat(img)
+    #     src_da_loss = add_prefix(self.da_head(feat[-3:], is_source=True),'src')
+    #     losses.update(src_da_loss)
+    #     feat_maps, pred_maps = model.bbox_head.return_feat_pred(feat)
+    #     # input([ele.shape for ele in feat])
+    #     # input([ele.shape for ele in feat_maps])
+    #     src_da_ano_loss = add_prefix(self.da_ano_head(feat_maps, is_source=True), 'src_ano')
+    #     # src_da_pred_loss = add_prefix(self.da_pred_head(pred_maps, is_source=True), 'src_pred')
+    #     losses.update(src_da_ano_loss)
+    #     # losses.update(src_da_pred_loss)
+    #     # auxhead cls loc loss
+    #     if self.auxiliary_head_num != 0:
+    #         feat_grl = [self.grl_img(feat_per_layer) for feat_per_layer in feat]
+    #         losses.update(add_prefix(self.cal_aux_cls_loc_loss(feat_grl, is_source=True), 'src'))
+    #     # cate loss
+    #     if self.enable_category_loss or self.enable_ease_loss:
+    #         # src_anchor, src_weight = self.cal_anchor_and_weight(
+    #         #     feat_maps=feat_maps, pred_maps=model.bbox_head.return_target_maps_list(
+    #         #     pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
+    #         src_anchor, src_weight = self.cal_anchor_and_weight(
+    #             feat_maps=feat[-3:], pred_maps=model.bbox_head.return_target_maps_list(
+    #             pred_maps, gt_bboxes, gt_labels, img_metas), sign='src')
+            
+    #     # head loss
+    #     loss = model.bbox_head.forward_train(
+    #         feat, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
+    #     losses.update(loss) 
+
+    #     # auxhead loss, ban bp
+    #     if self.auxiliary_head_num != 0:
+    #         feat_clone = [ele.clone().detach() for ele in feat]
+    #         for i in range(self.auxiliary_head_num):
+    #             loss = self.auxiliary_head[i].forward_train(
+    #             feat_clone, img_metas, gt_bboxes, gt_labels, gt_bboxes_ignore)
+    #             losses.update(add_prefix(loss, f'aux_{i}')) 
         
-        # category loss
-        if self.enable_category_loss:
-            for i in range(3):
-                loss = self.category_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
-                losses.update(add_prefix(loss, f'anchor_{i}'))
+    #     # category loss
+    #     if self.enable_category_loss:
+    #         for i in range(3):
+    #             loss = self.category_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
+    #             losses.update(add_prefix(loss, f'anchor_{i}'))
         
-        # ease loss
-        if self.enable_ease_loss:
-            for i in range(3):
-                loss = self.ease_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
-                losses.update(add_prefix(loss, f'anchor_{i}'))
+    #     # ease loss
+    #     if self.enable_ease_loss:
+    #         for i in range(3):
+    #             loss = self.ease_loss(src_anchor[i], src_weight[i], trg_anchor[i], trg_weight[i], layer_lvl=i)
+    #             losses.update(add_prefix(loss, f'anchor_{i}'))
         
-        ### !!!
-        # update memory bank
-        if self.enable_category_loss or self.enable_ease_loss:
-            for i in range(len(src_anchor)):
-                self.update_memory_bank(src_anchor[i], src_weight[i], i, 'src')
-                self.update_memory_bank(trg_anchor[i], trg_weight[i], i, 'trg')
-        return losses
-"""
+    #     ### !!!
+    #     # update memory bank
+    #     if self.enable_category_loss or self.enable_ease_loss:
+    #         for i in range(len(src_anchor)):
+    #             self.update_memory_bank(src_anchor[i], src_weight[i], i, 'src')
+    #             self.update_memory_bank(trg_anchor[i], trg_weight[i], i, 'trg')
+    #     return losses
+
 
 if __name__ == '__main__':
     dev = "cuda"

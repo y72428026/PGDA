@@ -8,13 +8,16 @@ img_scale=(resolution, resolution)
 samples_per_gpu=8
 workers_per_gpu=2
 evaluation = dict(interval=1, metric=['bbox'])
-dataset_name = 'HPL'
-dataset_tag = 'HP3class'
+dataset_name = 'XQblue'
+dataset_tag = 'XQ5class'
 classes = (
-    "remnant",
-    "broken",
-    "white border")
-num_classes=3
+"triangle offset" ,
+"remnant",
+"broken",
+"white border",
+# "folds",
+)
+num_classes=5
 
 anchors = [
     [(352, 62), (401, 81), (353, 106)],
@@ -76,20 +79,19 @@ train_pipeline = [
 ]
 test_pipeline = [
     dict(type='LoadImageFromFile'),
-    # dict(type='LoadAnnotations', with_bbox=True),
+    dict(type='LoadAnnotations', with_bbox=True),
     dict(
         type='MultiScaleFlipAug',
-        # img_scale=img_scale,
-        # flip=False,
         img_scale=img_scale,
-        flip=True,
+        flip=False,
+        # img_scale=img_scale,
+        # flip=True,
         transforms=[
             dict(type='Resize', keep_ratio=True),
             dict(type='RandomFlip'),
             dict(type='Normalize', **img_norm_cfg),
             dict(type='Pad', size_divisor=32),
             dict(type='ImageToTensor', keys=['img']),
-            # dict(type='Collect', keys=['img'])
             dict(type='Collect', keys=['img', 'gt_bboxes', 'gt_labels'])
         ])
 ]

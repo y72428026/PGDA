@@ -724,7 +724,7 @@ class YOLOV3Head(BaseDenseHead, BBoxTestMixin):
             )
         else:
             return batch_mlvl_bboxes, batch_mlvl_scores
-
+    ## mine
     def return_target_maps_list(self,
              pred_maps,
              gt_bboxes,

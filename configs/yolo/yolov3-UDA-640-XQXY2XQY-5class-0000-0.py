@@ -9,15 +9,16 @@ evaluation = dict(interval=1, metric=['bbox'])
 log_config = dict(interval=30)
 find_unused_parameters = True
 epoch = 200
+epoch = 273
 image_scale = (640, 640)
 dataset_tag = 'XQ5class'
 source_dataset = 'XQXY'
 target_dataset = 'XQY'
 classes = (
-    "Triangle offset",
+    "triangle offset",
     "remnant",
     "broken",
-    "White border",
+    "white border",
     "folds")
 num_classes = len(classes)
 

@@ -4,7 +4,7 @@ import pickle, os
 import shutil
 import tempfile
 import time
-
+import numpy as np
 import mmcv
 import torch
 import torch.distributed as dist
@@ -50,19 +50,6 @@ def single_gpu_test(model,
                     out_file = osp.join(out_dir, img_meta['ori_filename'])
                 else:
                     out_file = None
-    #             ### to visualize gt
-    #             model.module.show_gt_result(
-    #                 img_show,
-    #                 data['gt_bboxes'],
-    #                 data['gt_labels'],
-    #                 None,
-    #                 bbox_color=PALETTE,
-    #                 text_color=PALETTE,
-    #                 mask_color=PALETTE,
-    #                 show=show,
-    #                 out_file=out_file,
-    #                 score_thr=show_score_thr)
-    # return None
                 model.module.show_result(
                     img_show,
                     result[i],
@@ -87,6 +74,89 @@ def single_gpu_test(model,
         for _ in range(batch_size):
             prog_bar.update()
     return results
+
+# test function for tsne
+def single_gpu_test_tsne(model,
+                    data_loader,
+                    show=False,
+                    out_dir=None,
+                    show_score_thr=0.3):
+    model.eval()
+    results = []
+    dataset = data_loader.dataset
+    PALETTE = getattr(dataset, 'PALETTE', None)
+    prog_bar = mmcv.ProgressBar(len(dataset))
+    features = []
+    labels = []
+    for i, data in enumerate(data_loader):
+        with torch.no_grad():
+            feature, label = model.module.simple_test_for_tsne(return_loss=False, rescale=True, **data)
+            features.append(feature)
+            labels.append(label)
+        batch_size = len(data['img_metas'])
+        for _ in range(batch_size):
+            prog_bar.update()
+    feat_final = []
+    lbl_final = []
+    for i in range(3):
+        feature_i = [feat[i] for feat in features]
+        feature_i = torch.cat(feature_i, axis=0).cpu().numpy()
+        label_i = [label[i] for label in labels]
+        label_i = torch.cat(label_i, axis=0).cpu().numpy()
+        feat_final.append(feature_i)
+        lbl_final.append(label_i)
+    return feat_final, lbl_final
+
+
+# funciton for visualizing gt result
+def single_gpu_gt_test(model,
+                    data_loader,
+                    show=False,
+                    out_dir=None,
+                    show_score_thr=0.3):
+    model.eval()
+    results = []
+    dataset = data_loader.dataset
+    PALETTE = getattr(dataset, 'PALETTE', None)
+    prog_bar = mmcv.ProgressBar(len(dataset))
+    for i, data in enumerate(data_loader):
+        # print(data.keys())
+        batch_size = len(data['gt_labels'])
+
+        if show or out_dir:
+            if batch_size == 1 and isinstance(data['img'][0], torch.Tensor):
+                img_tensor = data['img'][0]
+            else:
+                img_tensor = data['img'][0].data[0]
+            img_metas = data['img_metas'][0].data[0]
+            # print(img_tensor.ndim)
+            imgs = tensor2imgs(img_tensor, **img_metas[0]['img_norm_cfg'])
+            assert len(imgs) == len(img_metas)
+
+            for i, (img, img_meta) in enumerate(zip(imgs, img_metas)):
+                h, w, _ = img_meta['img_shape']
+                img_show = img[:h, :w, :]
+
+                ori_h, ori_w = img_meta['ori_shape'][:-1]
+                img_show = mmcv.imresize(img_show, (ori_w, ori_h))
+
+                if out_dir:
+                    out_file = osp.join(out_dir, img_meta['ori_filename'])
+                else:
+                    out_file = None
+                ### to visualize gt
+                model.module.show_gt_result(
+                    img_show,
+                    data['gt_bboxes'],
+                    data['gt_labels'],
+                    None,
+                    bbox_color=PALETTE,
+                    text_color=PALETTE,
+                    mask_color=PALETTE,
+                    show=show,
+                    out_file=out_file,
+                    score_thr=show_score_thr)
+    return None
 
 
 def multi_gpu_test(model, data_loader, tmpdir=None, gpu_collect=False):

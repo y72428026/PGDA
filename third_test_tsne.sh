@@ -1,14 +1,14 @@
 # HPT2HPL
-# dataset=HPT2HPL
-# work_dir=/data/yebh/mmdet2/work_dirs/BIS/${dataset}
-# config_dir='/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/CFA_1k1k1k0/yolov3-UDA-640-HPT2HPL-3class-1k1k1k0-cfav9-0.025-cT0.5-pT0.5-a0.1-v1/yolov3-UDA-640-HPT2HPL-3class-1k1k1k0-cfav9-0.025-cT0.5-pT0.5-a0.1.py'
-# model_dir=/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/yolov3-UDA-640-HPT2HPL-3class-DA-462-462-462-0-cfav9-0.075-cT0.6-pT0.7-a0.6-v1_epoch_81.pth
-
-# xqpink2xqblue
-dataset=XQpink2XQblue
+dataset=HPT2HPL
 work_dir=/data/yebh/mmdet2/work_dirs/BIS/${dataset}
-config_dir='/data/yebh/mmdet2/work_dirs/BIS/XQpink2XQblue/CFA_cT/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.6-pT0.6-a0.1-v1/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.6-pT0.6-a0.1.py'
-model_dir='/data/yebh/mmdet2/work_dirs/BIS/XQpink2XQblue/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.9-pT0.6-a0.1-v1_epoch_69.pth'
+config_dir='/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/CFA_1k1k1k0/yolov3-UDA-640-HPT2HPL-3class-1k1k1k0-cfav9-0.025-cT0.5-pT0.5-a0.1-v1/yolov3-UDA-640-HPT2HPL-3class-1k1k1k0-cfav9-0.025-cT0.5-pT0.5-a0.1.py'
+model_dir=/data/yebh/mmdet2/work_dirs/BIS/HPT2HPL/yolov3-UDA-640-HPT2HPL-3class-DA-462-462-462-0-cfav9-0.075-cT0.6-pT0.7-a0.6-v1_epoch_81.pth
+
+# # xqpink2xqblue
+# dataset=XQpink2XQblue
+# work_dir=/data/yebh/mmdet2/work_dirs/BIS/${dataset}
+# config_dir='/data/yebh/mmdet2/work_dirs/BIS/XQpink2XQblue/CFA_cT/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.6-pT0.6-a0.1-v1/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.6-pT0.6-a0.1.py'
+# model_dir='/data/yebh/mmdet2/work_dirs/BIS/XQpink2XQblue/yolov3-UDA-640-XQpink2XQblue-5class-DA-2150-2150-2150-0-cfav9-0.0075-cT0.9-pT0.6-a0.1-v1_epoch_69.pth'
 
 # # XQXY2XQY
 # dataset=XQXY2XQY
@@ -18,9 +18,9 @@ model_dir='/data/yebh/mmdet2/work_dirs/BIS/XQpink2XQblue/yolov3-UDA-640-XQpink2X
 
 log_dir=${work_dir}/${epoch}_show_img.log
 show_dir=${work_dir}/../my_result/${dataset}
-gpu_ids=7
+gpu_ids=0
 ### test class-wise **AP50** and ***save*** the prediction images
-python tools/test.py \
+echo python tools/test_tsne.py \
     ${config_dir} \
     ${model_dir} \
     --gpu-id ${gpu_ids} \

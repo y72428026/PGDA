@@ -19,7 +19,8 @@ DA_w3 = 0
 # CFA weight
 cfg_v_list = [9]
 
-cfa_weight_list = [0.01]
+# cfa_weight_list = [0.01]
+cfa_weight_list = [0]
 # cfa_weight_list = [0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02]
 
 conf_T_list = [0.7]

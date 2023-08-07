@@ -104,7 +104,53 @@ class UDAModel(SingleStageDetector):
         """Encode images with backbone and decode into a semantic segmentation
         map of the same size as input."""
         return self.get_model().encode_decode(img, img_metas, **kwargs)
+    
+    # get the feature and label for tsne 
+    def get_feature_and_label(self, feat_maps, pred_maps):
+        # feat.shape 
+        #   [ torch.Size([8, 512, 19, 18]), 
+        #     torch.Size([8, 256, 38, 36]), 
+        #     torch.Size([8, 128, 76, 72])]
+        # pred.shape  [(N,33,H,W)*3]
+        # print([ele.shape for ele in feat_maps])
+        # print([ele.shape for ele in pred_maps])
+        features = []
+        labels = []
+        for i in range(3):
+            N, C, H, W = feat_maps[i].shape
+            feat_map_per_level = feat_maps[i].permute(0, 2, 3, 1) # (N, H, W, C)
+            pred_map_per_level = pred_maps[i].reshape(N, H, W, 3, -1) # (N, H, W, 3, 5+K)
+            conf_mask = torch.max(pred_map_per_level[...,4].sigmoid(),dim=-1)[0].unsqueeze(-1) # (N, H, W, 1)
+            # conf_mask = torch.max(pred_map_per_level[...,4],dim=-1)[0].unsqueeze(-1) # (N, H, W, 1)
+            # conf_mask = pred_map_per_level[...,4].sigmoid().sum(dim=-1).unsqueeze(-1).clamp(0,1) # (N, H, W, 1)
+            # assert conf_mask.max() <=1, conf_mask.min() >=0
+            pred_map_mask = torch.max(pred_map_per_level[...,5:].sigmoid(),dim=-2)[0] # (N, H, W, 6)
+            # pred_map_mask = torch.max(pred_map_per_level[...,5:],dim=-2)[0] # (N, H, W, 6)
+            # assert pred_map_mask.max() <=1, pred_map_mask.min() >=0
+            pred_map_per_level_cls = conf_mask * pred_map_mask
+            value, label = torch.max(pred_map_per_level_cls, dim=-1) # (N, H, W)
+            value = value > 0.7
+            # value = value > 0.9
+            feature = feat_map_per_level.reshape(-1,feat_map_per_level.shape[-1])[value.bool().reshape(-1)]
+            label = label.reshape(-1,1)[value.bool().reshape(-1)]
+            features.append(feature)
+            labels.append(label)
+        return features, labels
 
+    # simple test function for tsne
+    # return feature, label
+    def simple_test_for_tsne(self, img, img_metas, gt_bboxes, gt_labels, rescale=False, return_loss=False):
+        img = img[0].cuda()
+        img_metas = img_metas[0]
+        gt_bboxes = gt_bboxes[0].cuda()
+        gt_labels = gt_labels[0].cuda()
+        model = self.get_model()
+        _, feat_neck = model.extract_feat_mine(img)
+        feat_preds, pred_maps = model.bbox_head.return_feat_pred(feat_neck)
+        # # use gt pred maps
+        # pred_maps = model.bbox_head.return_target_maps_list(pred_maps, gt_bboxes, gt_labels, img_metas)
+        return(self.get_feature_and_label(feat_preds, pred_maps))
+        
     def forward_train(self,
                       source_img,
                       source_img_metas,
@@ -339,7 +385,6 @@ class UDAModel(SingleStageDetector):
             weight_list.append(weight)
         return anchor_list, weight_list
   
-
     ### !!!
     @torch.no_grad()
     def update_memory_bank(self, anchor, weight, layer_lvl, sign='src'):

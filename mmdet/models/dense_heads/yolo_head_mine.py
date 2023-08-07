@@ -39,6 +39,7 @@ class YOLOV3Head_mine(YOLOV3Head):
         self._init_layers_mine()
         # TODO just avgpool or avgpool then repeat
         self.avgpool = nn.AdaptiveAvgPool2d(1)
+        
 
     def _init_layers_mine(self):
         # in_channels=[64, 128],

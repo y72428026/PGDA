@@ -268,7 +268,26 @@ def imshow_det_bboxes(img,
     # input(class_names)
     # class_names = ('triangular offset', 'lower remnant', 'left and right side remnants', 
                 #    'both side openings', 'large hole opening', 'white edge')
-    class_names = None
+    # class_names = None
+    mine_class_dict = {}
+    mine_class_dict['triangular offset'] = 'O'
+    mine_class_dict['triangle offset'] = 'O'
+    mine_class_dict['remnant'] = 'R'
+    mine_class_dict['broken'] = 'B'
+    mine_class_dict['white border'] = 'W'
+    mine_class_dict['folds'] = 'F'
+    mine_class_names = []
+    name2colorid = {}
+    name2colorid['O'] = 0
+    name2colorid['R'] = 1
+    name2colorid['B'] = 2
+    name2colorid['W'] = 3
+    name2colorid['F'] = 4
+    colors = [(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)]
+    # # 橙红, 金黄, 亮黄, 草绿色, 淡紫色, 粉紫
+    for i in range(len(class_names)):
+        mine_class_names.append(mine_class_dict[class_names[i].lower()])
+    class_names = tuple(mine_class_names)
     if score_thr > 0:
         assert bboxes is not None and bboxes.shape[1] == 5
         scores = bboxes[:, -1]
@@ -296,17 +315,22 @@ def imshow_det_bboxes(img,
     ax.axis('off')
 
     max_label = int(max(labels) if len(labels) > 0 else 0)
-    text_palette = palette_val(get_palette(text_color, max_label + 1))
-    text_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
-    text_colors = [text_palette[label] for label in labels]
+    # text_palette = palette_val(get_palette(text_color, max_label + 1))
+    text_palette = palette_val(colors)
+    # text_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
+    text_colors = [text_palette[name2colorid[class_names[label]]] for label in labels]
+    # text_colors = [text_palette[label] for label in labels]
 
     num_bboxes = 0
     if bboxes is not None:
         num_bboxes = bboxes.shape[0]
-        bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
-#         bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(51, 255, 87),(51, 255, 189)])
-        bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
-        colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        # bbox_palette = palette_val(get_palette(bbox_color, max_label + 1))
+        # bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(51, 255, 87),(51, 255, 189)])
+        # bbox_palette = palette_val([(255, 87, 51),(255, 189, 51),(219, 255, 51),(117, 255, 51),(123, 128, 235),(240, 139, 240)])
+        bbox_palette = palette_val(colors)
+
+        # colors = [bbox_palette[label] for label in labels[:num_bboxes]]
+        colors = [bbox_palette[name2colorid[class_names[label]]] for label in labels[:num_bboxes]]
         draw_bboxes(ax, bboxes, colors, alpha=0.8, thickness=thickness)
 
         horizontal_alignment = 'left'
