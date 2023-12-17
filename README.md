@@ -7,4 +7,4 @@ please follow the [guideline](https://mmdetection.readthedocs.io/en/latest/get_s
 The pretrained model of the encoder can be download from [yolov3](https://download.openmmlab.com/mmdetection/v2.0/yolo/yolov3_d53_mstrain-608_273e_coco/yolov3_d53_mstrain-608_273e_coco_20210518_115020-a2c3acb8.pth)
 
 # dataset demo 
-The dataset demo can be acquired in [here](链接：https://pan.baidu.com/s/1zXOIHEOyD1L_vOinF-eK8A). 
+The dataset demo can be acquired in [here](https://pan.baidu.com/s/1zXOIHEOyD1L_vOinF-eK8A). 
